@@ -25,6 +25,21 @@ In a Claude Code cloud session, point Remotion at the preinstalled Chromium:
 - `src/theme.ts`: brand colors and fonts, matching the app
 - `src/Video.tsx`: scene order and the list of sound effects and their timings
 
+## Skills and packages for higher-quality animation
+
+Remotion's official Agent Skills are installed in `.agents/skills/` (linked into `.claude/skills/`), so Claude Code
+follows Remotion's own rules for timing, transitions, text, effects, 3D and audio when editing this project.
+Update them with `npx skills add remotion-dev/skills`.
+
+Installed and ready to use (not all are used by the current cut yet):
+
+- `@remotion/motion-blur`: true camera motion blur from blended sub-frames
+- `@remotion/transitions`, `@remotion/effects`, `@remotion/light-leaks`: tested transitions, effects and light-leak overlays
+- `@remotion/three` + `three`, `@react-three/fiber`, `@react-three/drei`: real 3D objects with lighting
+- `@remotion/lottie` + `lottie-web`: designer-made Lottie animations
+- `@remotion/paths`, `@remotion/noise`, `@remotion/animation-utils`, `@remotion/layout-utils`, `@remotion/rough-notation`: path drawing, organic motion, text fitting, hand-drawn highlights
+- `@remotion/media`, `@remotion/media-utils`, `@remotion/google-fonts`: video/audio handling and fonts
+
 ## Audio
 
 All music and sound effects are synthesized from scratch by `scripts/make_audio.py` (numpy/scipy), so they're original and free to use anywhere. Regenerate with `npm run audio`.
