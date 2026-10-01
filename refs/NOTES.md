@@ -73,7 +73,7 @@ continuously across UI, with a caption beside it ("Now choose a reference outlie
 What changed in v4:
 - **Camera never parks.** Keys are joined by a Catmull-Rom (cubic Hermite) spline, so the
   camera passes *through* keys instead of easing to a stop on each; past the last key it
-  keeps drifting on the end tangent. Every shot also has a slow perpetual push (0.6%/s)
+  keeps drifting on the end tangent. Every shot also has a slow perpetual push (1.2%/s)
   and a faint float.
 - **Fewer, longer shots.** Each feature is one ~5s continuous shot: open close on the caption
   as it writes on, dolly across to the product as it settles out of 3D, keep pushing gently.
@@ -82,3 +82,6 @@ What changed in v4:
   tilt), softer blur, 0.9s dissolves. The per-frame directional motion-blur filter was removed:
   it switched on and off with speed and read as stutter.
 - Captions and cards keep a slow drift or float after they land.
+
+Result (`refs/continuity.py`): still frames dropped from 30% (v3) to **11%** (example: 7%),
+and the longest still stretch from 1.3s to 0.75s.
