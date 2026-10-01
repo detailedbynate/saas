@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
-import { LEAD, clamp } from "./ui";
+import { AE_GRAPH_GLIDE, LEAD, clamp } from "./ui";
 
 /** How long a transition takes; neighbouring shots overlap by this much. */
 export const TRANSITION = LEAD * 2;
@@ -20,15 +20,16 @@ export type Move = "whipL" | "whipR" | "whipU" | "whipD" | "zoomIn" | "zoomOut" 
 /**
  * Camera keyframe: at `t` seconds, look at point (x, y) of the 1920×1080 stage with zoom `z`,
  * roll `r`, and 3D pitch `rx` / yaw `ry` (degrees). `ramp: true` makes the move *into* this
- * key a speed ramp (slow → fast → slow) instead of a constant glide.
+ * key a speed ramp (slow → fast → slow) instead of a constant glide; `glide: true` uses the
+ * AE_GRAPH_GLIDE curve instead (starts at full speed, decelerates over a long tail).
  */
-export type Key = { t: number; x?: number; y?: number; z?: number; r?: number; rx?: number; ry?: number; ramp?: boolean };
+export type Key = { t: number; x?: number; y?: number; z?: number; r?: number; rx?: number; ry?: number; ramp?: boolean; glide?: boolean };
 
 const W = 1920;
 const H = 1080;
 const F = ["x", "y", "lz", "r", "rx", "ry"] as const;
 type Field = (typeof F)[number];
-type Pt = { t: number; ramp: boolean } & Record<Field, number>;
+type Pt = { t: number; ramp: boolean; glide: boolean } & Record<Field, number>;
 
 interface Pose {
   x: number;
@@ -54,7 +55,7 @@ function camera(keys: Key[], t: number): Record<Field, number> {
   const pts: Pt[] = keys.map((k, i) => {
     const prev = keys.slice(0, i + 1).reverse();
     const pick = (f: "x" | "y" | "z" | "r" | "rx" | "ry", d: number) => (prev.find((p) => p[f] !== undefined)?.[f] as number | undefined) ?? d;
-    return { t: k.t, ramp: !!k.ramp, x: pick("x", W / 2), y: pick("y", H / 2), lz: Math.log(pick("z", 1)), r: pick("r", 0), rx: pick("rx", 0), ry: pick("ry", 0) };
+    return { t: k.t, ramp: !!k.ramp || !!k.glide, glide: !!k.glide, x: pick("x", W / 2), y: pick("y", H / 2), lz: Math.log(pick("z", 1)), r: pick("r", 0), rx: pick("rx", 0), ry: pick("ry", 0) };
   });
   if (pts.length === 0) return { x: W / 2, y: H / 2, lz: 0, r: 0, rx: 0, ry: 0 };
   if (pts.length === 1) return pts[0];
@@ -85,7 +86,8 @@ function camera(keys: Key[], t: number): Record<Field, number> {
   const h = b.t - a.t;
   const u = (t - a.t) / h;
   if (b.ramp) {
-    const e = RAMP(u);
+    // `glide`: the After Effects graph-editor curve (fast out of the gate, long silky tail).
+    const e = (b.glide ? AE_GRAPH_GLIDE : RAMP)(u);
     return Object.fromEntries(F.map((f) => [f, a[f] + (b[f] - a[f]) * e])) as Record<Field, number>;
   }
   const h00 = 2 * u ** 3 - 3 * u ** 2 + 1;

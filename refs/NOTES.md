@@ -187,3 +187,21 @@ Tracked Channels (three cards) → "In any niche" (floating tags) → the dashbo
 of a 3D tilt → "Less guessing. More outliers." → logo + URL.
 
 The app recording is used once (the dashboard). The v6 walkthrough scenes are in git history.
+
+### v7.1: glide curve, transform-only motion, matte glass
+
+Client-supplied rules, applied with one exception:
+
+- **AE_GRAPH_GLIDE** `Easing.bezier(0.16, 1, 0.3, 1)` is defined in `ui.tsx` and used for
+  every entrance; the scene-arrival camera uses it too (`glide: true` keys), so each scene
+  starts mid-move and decelerates on a long tail. Measured on a title: 0.73px/frame easing
+  down to ~0.1px/frame with no step larger than 0.16px.
+- **Transform and opacity only.** Every animated `left/top/width/height` was converted
+  (scattered cards, orbs, the search pill, the analyze-card collapse, fanned cards, niche
+  tags, chart bars, dust, backdrop shards, the cursor). All `interpolate` calls clamp.
+- **Matte glass.** Stage `#0b0f19`; surfaces use `GLASS` in `kit.tsx` (`rgba(11,15,25,0.72)`,
+  1px `rgba(255,255,255,0.08)` border, 16px radius, `backdrop-filter: blur(12px)`); 12px
+  radius on small controls; `letter-spacing: -0.02em`; glows toned down to a faint ring.
+- **Not applied: `translate3d` / `scale3d`.** That is advice for live browser playback.
+  Remotion renders frame by frame, and v6.1 measured `translate3d` as the cause of the text
+  stutter (per-letter layers re-rasterised in steps under zoom). Transforms stay 2D.

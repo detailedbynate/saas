@@ -13,7 +13,9 @@ import { C, FONT, GRADIENT_TEXT } from "../theme";
 
 export const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 /** easeOutCubic: elements arriving. */
-export const OUT = Easing.bezier(0.33, 1, 0.68, 1);
+export const AE_GRAPH_GLIDE = Easing.bezier(0.16, 1, 0.3, 1);
+/** Every entrance uses the glide: an instant, high-influence start and a long, soft deceleration. */
+export const OUT = AE_GRAPH_GLIDE;
 /** easeInOutCubic: transitions and deliberate camera moves. */
 export const IN_OUT = Easing.bezier(0.65, 0, 0.35, 1);
 /** easeInOutSine: slow camera drifts and background moves. */

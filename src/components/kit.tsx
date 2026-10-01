@@ -12,15 +12,24 @@ export const VIOLET = "139,92,246";
 export const LILAC = "196,181,253";
 
 /** The reference's signature look: near-black card with a bright edge and a wide bloom. */
-export function GlowCard({ children, style, glow = 1, radius = 34 }: { children?: ReactNode; style?: CSSProperties; glow?: number; radius?: number }) {
+/** Shared surface: deep matte slate glass with a hairline border and a background blur. */
+export const GLASS: CSSProperties = {
+  background: "rgba(11,15,25,0.72)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 16,
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
+};
+
+export function GlowCard({ children, style, glow = 1, radius = 16 }: { children?: ReactNode; style?: CSSProperties; glow?: number; radius?: number }) {
   return (
     <div
       style={{
         position: "relative",
-        background: "linear-gradient(180deg, #0f0d18, #08070e)",
+        ...GLASS,
         borderRadius: radius,
-        border: `2px solid rgba(${LILAC},${0.35 + 0.55 * glow})`,
-        boxShadow: `0 0 0 1px rgba(${VIOLET},${0.5 * glow}), 0 0 ${28 * glow}px rgba(${VIOLET},${0.75 * glow}), 0 0 ${110 * glow}px rgba(${VIOLET},${0.4 * glow}), inset 0 0 ${40 * glow}px rgba(${VIOLET},${0.12 * glow}), 0 40px 100px rgba(0,0,0,0.6)`,
+        // A restrained accent: a faint violet ring and bloom over a deep drop shadow.
+        boxShadow: `0 0 0 1px rgba(${VIOLET},${0.22 * glow}), 0 0 ${70 * glow}px rgba(${VIOLET},${0.2 * glow}), inset 0 1px 0 rgba(255,255,255,0.07), 0 30px 70px rgba(0,0,0,0.55)`,
         ...style,
       }}
     >
@@ -35,10 +44,9 @@ export function DarkCard({ children, style, dashed = false }: { children?: React
     <div
       style={{
         position: "relative",
-        background: "rgba(14,13,20,0.92)",
-        borderRadius: 30,
-        border: `2px ${dashed ? "dashed" : "solid"} rgba(255,255,255,${dashed ? 0.16 : 0.12})`,
-        boxShadow: "0 30px 80px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.06) inset",
+        ...GLASS,
+        border: `1px ${dashed ? "dashed" : "solid"} rgba(255,255,255,${dashed ? 0.16 : 0.08})`,
+        boxShadow: "0 30px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.07)",
         ...style,
       }}
     >
@@ -207,7 +215,7 @@ export function Hand({ path, clicks = [], size = 70 }: { path: [number, number, 
   const pressed = clicks.some((c) => t >= c && t < c + 0.12);
   const appear = prog(t, path[0][0], 0.25);
   return (
-    <div style={{ position: "absolute", left: x - size * 0.4, top: y - size * 0.05, opacity: appear, zIndex: 50, pointerEvents: "none" }}>
+    <div style={{ position: "absolute", left: 0, top: 0, transform: `translate(${x - size * 0.4}px, ${y - size * 0.05}px)`, opacity: appear, zIndex: 50, pointerEvents: "none" }}>
       {clicks.map((c) => {
         const r = prog(t, c, 0.55);
         if (t < c || r >= 1) return null;
@@ -223,7 +231,7 @@ export function FeatureTitle({ accent, rest, at = 0, size = 76, icon, style }: {
   const t = useTime();
   const words = [...accent.split(" ").filter(Boolean).map((w) => ({ w, a: true })), ...rest.split(" ").filter(Boolean).map((w) => ({ w, a: false }))];
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 16, fontFamily: FONT.display, fontWeight: 700, fontSize: size, letterSpacing: "-0.025em", lineHeight: 1.05, whiteSpace: "nowrap", ...style }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 16, fontFamily: FONT.display, fontWeight: 700, fontSize: size, letterSpacing: "-0.02em", lineHeight: 1.05, whiteSpace: "nowrap", ...style }}>
       <span>
         {words.map(({ w, a }, i) => {
           const p = prog(t, at + i * 0.1, 0.7);

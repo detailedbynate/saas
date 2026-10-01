@@ -1,19 +1,24 @@
 import type { CSSProperties, ReactNode } from "react";
 import { AbsoluteFill, Easing, interpolate, random } from "remotion";
 import { AppStill, AppWindow, ShortCard } from "../components/fx";
-import { FeatureTitle, GlowCard, Glyph, Hand, IconTile, LILAC, LogoMark, SoftType, Spinner, VIOLET } from "../components/kit";
+import { FeatureTitle, GLASS, GlowCard, Glyph, Hand, IconTile, LILAC, LogoMark, SoftType, Spinner, VIOLET } from "../components/kit";
 import { Shot } from "../components/Shot";
-import { Counter, Words, clamp, prog, useTime } from "../components/ui";
+import { AE_GRAPH_GLIDE, Counter, Words, clamp, prog, useTime } from "../components/ui";
 import { C, FONT, GRADIENT_TEXT } from "../theme";
 
 /*
  * v7: simple scenes, one idea each, moving the way the two references move
  * (refs/NOTES.md "v7"): every scene arrives on a quick zoom-out, then holds on a
- * very slow push; things resolve out of blur on a long ease-out; scenes dissolve
- * through blur. Nothing bounces. Only 2D transforms inside shots (see Shot.tsx).
+ * very slow push; things resolve out of blur on the AE_GRAPH_GLIDE curve; scenes
+ * dissolve through blur. Nothing bounces.
+ *
+ * Motion rules: animate only `transform` and `opacity` (never left/top/width/height),
+ * and keep transforms 2D inside shots: translate3d/scale3d put text on its own layer,
+ * which Chrome re-draws in steps under a zooming camera (measured: a 1px jump every
+ * fourth frame). Surfaces use the GLASS style from kit.tsx.
  */
 
-const OUT = Easing.bezier(0.16, 1, 0.3, 1); // long, soft landing
+const OUT = AE_GRAPH_GLIDE; // instant start, long silky landing: every entrance uses it
 const IO = Easing.bezier(0.65, 0, 0.35, 1);
 const abs = (x: number, y: number, extra?: CSSProperties): CSSProperties => ({ position: "absolute", left: x, top: y, ...extra });
 
@@ -34,7 +39,7 @@ function leave(o: number, dx = -120): CSSProperties {
 /** The standard camera: arrive on a zoom-out, then a slow push for the rest of the shot. */
 const settle = (dur: number, from = 1.22, to = 1.0, x = 960, y = 540) => [
   { t: -0.3, z: from * to, x, y },
-  { t: 0.9, z: to, x, y, ramp: true },
+  { t: 1.1, z: to, x, y, glide: true },
   { t: dur + 0.4, z: to * (1 + 0.02 * dur), x, y },
 ];
 /** Feature scenes sit a little closer, framed just below centre so the title stays in shot. */
@@ -43,7 +48,7 @@ const FEATURE = [1.13, 960, 528] as const;
 /** A headline: medium weight, word by word out of blur. */
 function Line({ text, at, size = 112, accent = [], weight = 650, color = C.text }: { text: string; at: number; size?: number; accent?: string[]; weight?: number; color?: string }) {
   return (
-    <div style={{ fontFamily: FONT.display, fontWeight: weight, fontSize: size, letterSpacing: "-0.03em", lineHeight: 1.1, color, textAlign: "center", whiteSpace: "nowrap" }}>
+    <div style={{ fontFamily: FONT.display, fontWeight: weight, fontSize: size, letterSpacing: "-0.02em", lineHeight: 1.1, color, textAlign: "center", whiteSpace: "nowrap" }}>
       <Words text={text} at={at} stagger={0.16} dur={0.85} highlight={accent} />
     </div>
   );
@@ -125,7 +130,7 @@ export function Multiply({ dur }: { dur: number }) {
         // Far and near cards sit out of focus; the mid-depth ones are sharp.
         const focus = Math.abs(z - 0.55) * 9;
         return (
-          <div key={i} style={{ ...abs(960 + (x - 960) * p + dirx * drift - w / 2, 540 + (y - 540) * p + diry * drift - h / 2), opacity: Math.min(1, p * 1.5) * (0.35 + 0.65 * z), filter: `blur(${focus + (1 - p) * 8}px)`, zIndex: Math.round(z * 10) }}>
+          <div key={i} style={{ ...abs(960 - w / 2, 540 - h / 2), transform: `translate(${(x - 960) * p + dirx * drift}px, ${(y - 540) * p + diry * drift}px)`, opacity: Math.min(1, p * 1.5) * (0.35 + 0.65 * z), filter: `blur(${focus + (1 - p) * 8}px)`, zIndex: Math.round(z * 10) }}>
             <ShortCard clip={CLIPS[i % CLIPS.length]} w={w} h={h} glow={0.15} flat />
           </div>
         );
@@ -178,10 +183,9 @@ export function TurnLogo({ dur }: { dur: number }) {
         const fy = y + Math.cos(t * 0.6 + i * 2) * 20 - t * 10 * z;
         const cx = fx + (960 - fx) * gather;
         const cy = fy + (500 - fy) * gather;
-        const s = size * (1 - 0.8 * gather);
         return (
-          <div key={i} style={{ ...abs(cx - s / 2, cy - s / 2), opacity: p * (1 - prog(t, HIT - 0.05, 0.2)), filter: `blur(${Math.abs(z - 0.5) * 10 * (1 - gather) + (1 - p) * 10}px)`, zIndex: Math.round(z * 10) }}>
-            <Orb size={s} />
+          <div key={i} style={{ ...abs(-size / 2, -size / 2), transform: `translate(${cx}px, ${cy}px) scale(${1 - 0.8 * gather})`, opacity: p * (1 - prog(t, HIT - 0.05, 0.2)), filter: `blur(${Math.abs(z - 0.5) * 10 * (1 - gather) + (1 - p) * 10}px)`, zIndex: Math.round(z * 10) }}>
+            <Orb size={size} />
           </div>
         );
       })}
@@ -197,7 +201,7 @@ export function TurnLogo({ dur }: { dur: number }) {
           <div style={{ borderRadius: 44, overflow: "hidden", boxShadow: `0 0 ${90 * logo}px rgba(${VIOLET},0.9)` }}>
             <LogoMark size={190} />
           </div>
-          <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 200, letterSpacing: "-0.05em", color: C.text }}>Outlier</div>
+          <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 200, letterSpacing: "-0.02em", color: C.text }}>Outlier</div>
         </div>
         <div style={{ marginTop: 34, fontFamily: FONT.body, fontWeight: 500, fontSize: 46, color: C.textSecondary, ...arrive(sub, 0, 20, 1, 10) }}>See what's about to blow up.</div>
       </AbsoluteFill>
@@ -230,16 +234,16 @@ export function NicheFinder({ dur }: { dur: number }) {
     <Shot id="niche" duration={dur} enter="zoomIn" exit="blur" keys={settle(dur, 1.0, ...FEATURE)}>
       <Titled accent="Niche" rest="Finder" icon={Glyph.eye(46)}>
         {/* The search pill, which lifts to make room for the result */}
-        <div style={{ ...abs(960 - 450, interpolate(morph, [0, 1], [470, 300])), ...arrive(pill, 0, 40) }}>
-          <div style={{ width: 900, height: 108, borderRadius: 999, display: "flex", alignItems: "center", gap: 22, padding: "0 40px", background: `linear-gradient(180deg, rgba(${VIOLET},0.5), rgba(76,29,149,0.6))`, border: `2px solid rgba(${LILAC},0.8)`, boxShadow: `0 0 50px rgba(${VIOLET},0.7), 0 0 150px rgba(${VIOLET},0.3), inset 0 2px 0 rgba(255,255,255,0.3)`, fontFamily: FONT.body, fontWeight: 500, fontSize: 44, color: "#fff" }}>
+        <div style={{ ...abs(960 - 450, 470), transform: `translate(0, ${interpolate(morph, [0, 1], [0, -170], clamp)}px)` }}>
+          <div style={{ ...GLASS, width: 900, height: 108, display: "flex", alignItems: "center", gap: 22, padding: "0 28px 0 36px", boxShadow: `0 0 0 1px rgba(${VIOLET},0.35), 0 0 70px rgba(${VIOLET},0.28), inset 0 1px 0 rgba(255,255,255,0.08), 0 30px 70px rgba(0,0,0,0.5)`, fontFamily: FONT.body, fontWeight: 500, fontSize: 44, letterSpacing: "-0.02em", color: "#fff", ...arrive(pill, 0, 40) }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
             <SoftType text="Minecraft" at={0.5} cps={16} trail={3} />
-            <div style={{ marginLeft: "auto", padding: "14px 34px", borderRadius: 999, background: "#fff", color: "#5b21b6", fontWeight: 700, fontSize: 30, transform: `scale(${t >= 1.25 && t < 1.37 ? 0.93 : 1})` }}>Research</div>
+            <div style={{ marginLeft: "auto", padding: "14px 34px", borderRadius: 12, background: C.accent, color: "#fff", fontWeight: 700, fontSize: 30, transform: `scale(${t >= 1.25 && t < 1.37 ? 0.93 : 1})` }}>Research</div>
           </div>
         </div>
         {/* Result: an opportunity score and three facts */}
         <div style={{ ...abs(960 - 520, 470), width: 1040, display: "flex", alignItems: "center", gap: 60, ...arrive(prog(t, 1.6, 0.9, OUT), 0, 50) }}>
-          <GlowCard glow={0.8} radius={40} style={{ width: 300, height: 300, display: "grid", placeItems: "center", flexShrink: 0 }}>
+          <GlowCard glow={0.8} style={{ width: 300, height: 300, display: "grid", placeItems: "center", flexShrink: 0 }}>
             <svg width="230" height="230" viewBox="0 0 200 200" style={{ position: "absolute", transform: "rotate(-90deg)" }}>
               <circle cx="100" cy="100" r="88" fill="none" stroke={`rgba(${VIOLET},0.2)`} strokeWidth="14" />
               <circle cx="100" cy="100" r="88" fill="none" stroke="#a78bfa" strokeWidth="14" strokeLinecap="round" strokeDasharray={R} strokeDashoffset={R * (1 - 0.77 * ring)} />
@@ -257,7 +261,7 @@ export function NicheFinder({ dur }: { dur: number }) {
               ["Growth", "+24%"],
               ["Typical channel", "$383–$1.5K / mo"],
             ].map(([k, v], i) => (
-              <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "22px 30px", borderRadius: 20, background: "rgba(14,13,20,0.9)", border: "1.5px solid rgba(255,255,255,0.12)", fontFamily: FONT.body, ...arrive(prog(t, 1.85 + i * 0.12, 0.8, OUT), 50, 0, 1, 8) }}>
+              <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", ...GLASS, borderRadius: 12, padding: "22px 30px", fontFamily: FONT.body, letterSpacing: "-0.02em", ...arrive(prog(t, 1.85 + i * 0.12, 0.8, OUT), 50, 0, 1, 8) }}>
                 <span style={{ fontSize: 30, color: C.textSecondary }}>{k}</span>
                 <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 40, color: i ? C.good : C.text }}>{v}</span>
               </div>
@@ -294,7 +298,7 @@ export function ViralVideos({ dur }: { dur: number }) {
         <FeatureTitle accent="Viral" rest="Videos" at={0.3} size={92} />
         <div style={{ display: "flex", alignItems: "center", gap: 22, marginTop: 20, ...arrive(prog(t, 0.6, 0.8, OUT), 40, 0, 1, 10) }}>
           {Glyph.eye(118)}
-          <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 124, letterSpacing: "-0.03em", color: C.text }}>
+          <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 124, letterSpacing: "-0.02em", color: C.text }}>
             <Counter value={38} at={0.65} dur={2.0} prefix="+" suffix="M" />
           </span>
         </div>
@@ -313,18 +317,17 @@ export function AnalyzeVideo({ dur }: { dur: number }) {
   const rise = prog(t, 0.05, 1.0, OUT);
   const typedOut = prog(t, 1.5, 0.2);
   const spin = prog(t, 1.5, 0.25) * (1 - prog(t, 1.95, 0.2));
-  const morph = prog(t, 2.0, 0.75, IO);
-  const w = interpolate(morph, [0, 1], [1180, 980]);
-  const h = interpolate(morph, [0, 1], [520, 190]);
-  const result = prog(t, 2.4, 0.7, OUT);
+  // The big card shrinks away into the score bar. Both are fixed-size; only transform and opacity change.
+  const away = prog(t, 2.0, 0.6, IO);
+  const result = prog(t, 2.25, 0.9, OUT);
   return (
     <Shot id="analyze" duration={dur} enter="blur" exit="blur" keys={settle(dur, 1.22, ...FEATURE)}>
       <Titled accent="Analyze" rest="Video" icon={Glyph.gauge(40)}>
-        <div style={{ position: "absolute", left: 960 - w / 2, top: interpolate(morph, [0, 1], [270, 440]), ...arrive(rise, 0, 120, 0.94) }}>
-          <GlowCard glow={0.7 + 0.3 * morph} style={{ width: w, height: h, overflow: "hidden" }}>
-            <div style={{ position: "absolute", inset: 0, opacity: 1 - morph, filter: morph > 0.01 ? `blur(${morph * 10}px)` : undefined }}>
-              <div style={{ position: "absolute", left: 60, top: 60, right: 60, height: 250, borderRadius: 26, border: "2px solid rgba(255,255,255,0.12)" }}>
-                <div style={{ position: "absolute", left: 34, top: 30, display: "flex", alignItems: "center", gap: 16, fontFamily: FONT.body, fontSize: 36, color: C.text, opacity: 1 - typedOut }}>
+        {away < 1 ? (
+          <div style={{ ...abs(960 - 590, 270), opacity: 1 - away, transform: `translate(0, ${away * 60}px) scale(${1 - 0.18 * away}, ${1 - 0.55 * away})`, filter: away > 0.01 ? `blur(${away * 12}px)` : undefined }}>
+            <GlowCard glow={0.7} style={{ width: 1180, height: 520, ...arrive(rise, 0, 120, 0.94) }}>
+              <div style={{ ...GLASS, position: "absolute", left: 60, top: 60, right: 60, height: 250, background: "rgba(255,255,255,0.02)" }}>
+                <div style={{ position: "absolute", left: 34, top: 30, display: "flex", alignItems: "center", gap: 16, fontFamily: FONT.body, fontSize: 36, letterSpacing: "-0.02em", color: C.text, opacity: 1 - typedOut }}>
                   {Glyph.yt(46)}
                   <SoftType text="youtube.com/shorts/c1tyIn60s" at={0.45} cps={36} caret />
                 </div>
@@ -332,27 +335,31 @@ export function AnalyzeVideo({ dur }: { dur: number }) {
                   <Spinner size={70} />
                 </div>
               </div>
-              <div style={{ position: "absolute", right: 60, bottom: 54, padding: "18px 44px", borderRadius: 18, background: C.accent, color: "#fff", fontFamily: FONT.body, fontWeight: 700, fontSize: 32, boxShadow: `0 0 30px rgba(${VIOLET},0.6)`, transform: `scale(${t >= 1.4 && t < 1.52 ? 0.94 : 1})` }}>Analyze</div>
-            </div>
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", gap: 34, padding: "0 50px", opacity: result, filter: result < 0.99 ? `blur(${(1 - result) * 8}px)` : undefined }}>
-              <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 104, letterSpacing: "-0.04em", ...GRADIENT_TEXT }}>
-                <Counter value={79} at={2.4} dur={0.9} suffix="×" />
+              <div style={{ position: "absolute", right: 60, bottom: 54, padding: "18px 44px", borderRadius: 12, background: C.accent, color: "#fff", fontFamily: FONT.body, fontWeight: 700, fontSize: 32, transform: `scale(${t >= 1.4 && t < 1.52 ? 0.94 : 1})` }}>Analyze</div>
+            </GlowCard>
+          </div>
+        ) : null}
+        {t >= 2.2 ? (
+          <div style={{ ...abs(960 - 490, 440), ...arrive(result, 0, -30, 1.12, 12) }}>
+            <GlowCard glow={1} style={{ width: 980, height: 190, display: "flex", alignItems: "center", gap: 34, padding: "0 50px" }}>
+              <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 104, letterSpacing: "-0.02em", ...GRADIENT_TEXT }}>
+                <Counter value={79} at={2.3} dur={0.9} suffix="×" />
               </div>
-              <div style={{ fontFamily: FONT.body, lineHeight: 1.25 }}>
+              <div style={{ fontFamily: FONT.body, lineHeight: 1.25, letterSpacing: "-0.02em" }}>
                 <div style={{ fontSize: 28, color: C.text, fontWeight: 700 }}>outlier score</div>
                 <div style={{ fontSize: 23, color: C.muted }}>4.1M views vs 52K median</div>
               </div>
               <div style={{ marginLeft: "auto", display: "flex", alignItems: "flex-end", gap: 6, height: 74 }}>
                 {Array.from({ length: 24 }, (_, i) => {
                   const big = i === 20;
-                  const hh = (big ? 1 : 0.18 + 0.22 * Math.abs(Math.sin(i * 1.7))) * prog(t, 2.5 + i * 0.015, 0.6, OUT);
-                  return <div key={i} style={{ width: 9, height: 74 * hh, borderRadius: 4, background: big ? "linear-gradient(180deg,#fff,#a78bfa)" : `rgba(${LILAC},0.5)` }} />;
+                  const hh = big ? 1 : 0.18 + 0.22 * Math.abs(Math.sin(i * 1.7));
+                  return <div key={i} style={{ width: 9, height: 74 * hh, transform: `scaleY(${prog(t, 2.45 + i * 0.015, 0.6, OUT)})`, transformOrigin: "50% 100%", borderRadius: 4, background: big ? "linear-gradient(180deg,#fff,#a78bfa)" : `rgba(${LILAC},0.5)` }} />;
                 })}
               </div>
-            </div>
-          </GlowCard>
-        </div>
-        {morph < 0.4 ? (
+            </GlowCard>
+          </div>
+        ) : null}
+        {away < 0.3 ? (
           <Hand
             path={[
               [0.9, 1560, 1100],
@@ -372,8 +379,8 @@ export function AnalyzeVideo({ dur }: { dur: number }) {
 function Fan({ i, t, children }: { i: number; t: number; children: ReactNode }) {
   const p = prog(t, 0.35 + i * 0.09, 1.0, OUT);
   return (
-    <div style={{ position: "absolute", left: 960 - 185 + (i - 1) * 410 * p, top: 280, transform: p < 0.9995 ? `rotate(${(1 - p) * (i - 1) * 7}deg) scale(${0.7 + 0.3 * p})` : undefined, opacity: Math.min(1, p * 1.6), filter: p < 0.99 ? `blur(${(1 - p) * 10}px)` : undefined, zIndex: i === 1 ? 2 : 1 }}>
-      <GlowCard glow={0.8} radius={30} style={{ width: 370, height: 600, padding: 34, fontFamily: FONT.body, display: "flex", flexDirection: "column" }}>
+    <div style={{ position: "absolute", left: 960 - 185, top: 280, transform: `translate(${(i - 1) * 410 * p}px, 0) rotate(${(1 - p) * (i - 1) * 7}deg) scale(${0.7 + 0.3 * p})`, opacity: Math.min(1, p * 1.6), filter: p < 0.99 ? `blur(${(1 - p) * 10}px)` : undefined, zIndex: i === 1 ? 2 : 1 }}>
+      <GlowCard glow={0.8} style={{ width: 370, height: 600, padding: 34, fontFamily: FONT.body, letterSpacing: "-0.02em", display: "flex", flexDirection: "column" }}>
         {children}
       </GlowCard>
     </div>
@@ -411,7 +418,7 @@ export function TrackedChannels({ dur }: { dur: number }) {
           </div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 170, marginTop: "auto" }}>
             {[0.25, 0.32, 0.3, 0.45, 0.4, 0.62, 0.78, 1].map((hh, i) => (
-              <div key={i} style={{ flex: 1, height: `${hh * 100 * prog(t, 1.0 + i * 0.06, 0.8, OUT)}%`, borderRadius: 6, background: i === 7 ? "linear-gradient(180deg,#ddd6fe,#8b5cf6)" : `rgba(${LILAC},0.35)` }} />
+              <div key={i} style={{ flex: 1, height: `${hh * 100}%`, transform: `scaleY(${prog(t, 1.0 + i * 0.06, 0.8, OUT)})`, transformOrigin: "50% 100%", borderRadius: 6, background: i === 7 ? "linear-gradient(180deg,#ddd6fe,#8b5cf6)" : `rgba(${LILAC},0.35)` }} />
             ))}
           </div>
         </Fan>
@@ -438,14 +445,14 @@ export function AnyNiche({ dur }: { dur: number }) {
         const x = 960 + Math.cos(a) * r * 1.5;
         const y = 540 + Math.sin(a) * r * 0.8;
         return (
-          <div key={n} style={{ position: "absolute", left: x, top: y, transform: `translate(-50%,-50%) scale(${0.7 + 0.7 * z})`, display: "flex", alignItems: "center", gap: 12, fontFamily: FONT.body, fontWeight: 600, fontSize: 34, color: C.text, whiteSpace: "nowrap", opacity: p * (0.45 + 0.55 * (1 - Math.abs(z - 0.5) * 2)), filter: `blur(${Math.abs(z - 0.45) * 8 + (1 - p) * 8}px)` }}>
+          <div key={n} style={{ position: "absolute", left: 960, top: 540, transform: `translate(-50%,-50%) translate(${x - 960}px, ${y - 540}px) scale(${0.7 + 0.7 * z})`, display: "flex", alignItems: "center", gap: 12, fontFamily: FONT.body, fontWeight: 600, fontSize: 34, color: C.text, whiteSpace: "nowrap", opacity: p * (0.45 + 0.55 * (1 - Math.abs(z - 0.5) * 2)), filter: `blur(${Math.abs(z - 0.45) * 8 + (1 - p) * 8}px)` }}>
             <span style={{ width: 14, height: 14, borderRadius: 99, background: "#a78bfa", boxShadow: `0 0 14px rgba(${VIOLET},0.9)` }} />
             {n}
           </div>
         );
       })}
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
-        <div style={{ padding: "30px 76px", borderRadius: 34, background: "linear-gradient(100deg, #7c3aed, #c084fc 55%, #f0abfc)", boxShadow: `0 0 90px rgba(${VIOLET},0.8), 0 0 220px rgba(192,132,252,0.35), inset 0 2px 0 rgba(255,255,255,0.4)`, fontFamily: FONT.display, fontWeight: 700, fontSize: 84, letterSpacing: "-0.03em", color: "#fff", ...arrive(pill, 0, 0, 0.86, 16) }}>In any niche</div>
+        <div style={{ padding: "30px 76px", borderRadius: 16, background: "linear-gradient(100deg, #7c3aed, #c084fc 55%, #f0abfc)", boxShadow: `0 0 90px rgba(${VIOLET},0.8), 0 0 220px rgba(192,132,252,0.35), inset 0 2px 0 rgba(255,255,255,0.4)`, fontFamily: FONT.display, fontWeight: 700, fontSize: 84, letterSpacing: "-0.02em", color: "#fff", ...arrive(pill, 0, 0, 0.86, 16) }}>In any niche</div>
       </AbsoluteFill>
     </Shot>
   );
@@ -510,10 +517,10 @@ export function End({ dur }: { dur: number }) {
             <div style={{ borderRadius: 40, overflow: "hidden", boxShadow: `0 0 80px rgba(${VIOLET},0.9)` }}>
               <LogoMark size={170} />
             </div>
-            <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 184, letterSpacing: "-0.05em", color: C.text }}>Outlier</div>
+            <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 184, letterSpacing: "-0.02em", color: C.text }}>Outlier</div>
           </div>
           <div style={{ marginTop: 28, fontFamily: FONT.body, fontWeight: 500, fontSize: 44, color: C.textSecondary, ...arrive(sub, 0, 20, 1, 10) }}>Find your next outlier before everyone else.</div>
-          <div style={{ marginTop: 50, padding: "22px 56px", borderRadius: 999, background: "linear-gradient(100deg, #7c3aed, #c084fc 60%, #f0abfc)", boxShadow: `0 0 80px rgba(${VIOLET},0.75), inset 0 2px 0 rgba(255,255,255,0.4)`, color: "#fff", fontFamily: FONT.display, fontWeight: 700, fontSize: 46, ...arrive(pill, 0, 24, 0.92, 12) }}>useoutlier.online</div>
+          <div style={{ marginTop: 50, padding: "22px 56px", borderRadius: 16, background: "linear-gradient(100deg, #7c3aed, #c084fc 60%, #f0abfc)", boxShadow: `0 0 80px rgba(${VIOLET},0.75), inset 0 2px 0 rgba(255,255,255,0.4)`, color: "#fff", fontFamily: FONT.display, fontWeight: 700, fontSize: 46, ...arrive(pill, 0, 24, 0.92, 12) }}>useoutlier.online</div>
         </AbsoluteFill>
       </AbsoluteFill>
     </Shot>

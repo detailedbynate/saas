@@ -76,7 +76,7 @@ export function ShortCard({ clip, w, h, live = false, from = 0, badge, glow = 0.
         position: "relative",
         width: w,
         height: h,
-        borderRadius: Math.min(w, h) * 0.085,
+        borderRadius: 16,
         overflow: "hidden",
         border: `2px solid rgba(${LILAC},${0.25 + 0.6 * glow})`,
         boxShadow: flat ? undefined : `0 0 ${26 * glow}px rgba(${VIOLET},${0.75 * glow}), 0 0 ${90 * glow}px rgba(${VIOLET},${0.35 * glow}), 0 30px 80px rgba(0,0,0,0.6)`,
@@ -115,7 +115,7 @@ export function AppWindow({ children, glow = 0.6 }: { children: ReactNode; glow?
         left: WIN.x,
         top: WIN.y,
         width: WIN.w,
-        borderRadius: 26,
+        borderRadius: 16,
         overflow: "hidden",
         background: "#06050b",
         border: `1.5px solid rgba(${LILAC},${0.25 + 0.5 * glow})`,
@@ -156,10 +156,11 @@ export function Spot({ x, y, w, h, at, r = 18 }: { x: number; y: number; w: numb
     <div
       style={{
         position: "absolute",
-        left: x - 10 * (1 - p),
-        top: y - 10 * (1 - p),
-        width: w + 20 * (1 - p),
-        height: h + 20 * (1 - p),
+        left: x,
+        top: y,
+        width: w,
+        height: h,
+        transform: `scale(${1 + (20 * (1 - p)) / w}, ${1 + (20 * (1 - p)) / h})`,
         borderRadius: r,
         border: `3px solid rgba(${LILAC},${0.95 * p})`,
         boxShadow: `0 0 ${40 + 60 * (1 - pulse)}px rgba(${VIOLET},${0.9 * p}), inset 0 0 40px rgba(${VIOLET},${0.25 * p})`,
@@ -223,7 +224,7 @@ export function Dust({ count = 46, seed = "dust", tint = LILAC, speed = 1 }: { c
         const size = (2 + z * z * 9) * (z > 0.75 ? 3.2 : 2.2);
         const tw = 0.5 + 0.5 * Math.sin(t * (1 + z * 2) + i * 2.3);
         const a = (0.2 + 0.6 * tw) * (0.4 + 0.6 * z) * (z > 0.75 ? 0.55 : 1);
-        return <div key={i} style={{ position: "absolute", left: x, top: y, width: size, height: size, borderRadius: 99, background: `radial-gradient(circle, rgba(${tint},${a}) 0%, rgba(${tint},${a * 0.35}) ${z > 0.75 ? 35 : 45}%, transparent 70%)` }} />;
+        return <div key={i} style={{ position: "absolute", left: 0, top: 0, transform: `translate(${x}px, ${y}px)`, width: size, height: size, borderRadius: 99, background: `radial-gradient(circle, rgba(${tint},${a}) 0%, rgba(${tint},${a * 0.35}) ${z > 0.75 ? 35 : 45}%, transparent 70%)` }} />;
       })}
     </AbsoluteFill>
   );
@@ -241,7 +242,7 @@ export function Sparks({ x, y, at, count = 22, seed = "sparks", reach = 420 }: {
         const a = random(`${seed}-a-${i}`) * Math.PI * 2;
         const d = (0.35 + 0.65 * random(`${seed}-d-${i}`)) * reach * e;
         const s = 3 + random(`${seed}-s-${i}`) * 7;
-        return <div key={i} style={{ position: "absolute", left: x + Math.cos(a) * d, top: y + Math.sin(a) * d + 80 * u * u, width: s, height: s, borderRadius: 99, background: "#fff", boxShadow: `0 0 ${s * 3}px rgba(${LILAC},1), 0 0 ${s * 6}px rgba(${VIOLET},0.8)`, opacity: (1 - u) ** 1.5 }} />;
+        return <div key={i} style={{ position: "absolute", left: x, top: y, transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d + 80 * u * u}px)`, width: s, height: s, borderRadius: 99, background: "#fff", boxShadow: `0 0 ${s * 3}px rgba(${LILAC},1), 0 0 ${s * 6}px rgba(${VIOLET},0.8)`, opacity: (1 - u) ** 1.5 }} />;
       })}
     </>
   );
