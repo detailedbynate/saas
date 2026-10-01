@@ -1,13 +1,13 @@
 import { AbsoluteFill } from "remotion";
 import { Shot } from "../components/Shot";
-import { BACK, Counter, OUT, Title, Words, prog, useTime } from "../components/ui";
+import { BACK, Counter, IN_OUT, OUT, Title, Words, prog, useTime } from "../components/ui";
 import { C, FONT, GRADIENT_TEXT } from "../theme";
 
 /** A Short from a tiny channel whose views blow past millions. */
 function ShortCard() {
   const t = useTime();
-  const s = prog(t, 0, 0.9);
-  const badge = prog(t, 1.75, 0.45, BACK);
+  const s = prog(t, 0, 1.0, IN_OUT);
+  const badge = prog(t, 1.75, 0.5, BACK);
   const glow = prog(t, 1.4, 0.6);
   return (
     <div
@@ -16,8 +16,9 @@ function ShortCard() {
         height: 676,
         borderRadius: 36,
         position: "relative",
-        transform: `translateY(${(1 - s) * 120}px) scale(${0.8 + 0.2 * s}) rotate(${(1 - s) * -8}deg)`,
-        opacity: Math.min(1, s * 3),
+        transform: `translateY(${(1 - s) * 90}px) scale(${0.88 + 0.12 * s}) rotate(${(1 - s) * -5}deg)`,
+        opacity: Math.min(1, s * 2.5),
+        filter: s < 0.98 ? `blur(${(1 - s) * 14}px)` : undefined,
         background: "linear-gradient(160deg, #2a1b4f 0%, #120c24 45%, #070510 100%)",
         border: "1px solid rgba(255,255,255,0.12)",
         boxShadow: `0 50px 120px rgba(0,0,0,0.8), 0 0 ${130 * glow}px rgba(139,92,246,${0.55 * glow})`,
@@ -67,7 +68,7 @@ function ShortCard() {
 
 function Stat({ at, side, label, foot, children }: { at: number; side: "left" | "right"; label: string; foot: string; children: React.ReactNode }) {
   const t = useTime();
-  const p = prog(t, at, 0.8, OUT);
+  const p = prog(t, at, 0.75, OUT);
   const dir = side === "left" ? -1 : 1;
   return (
     <div
@@ -77,8 +78,9 @@ function Stat({ at, side, label, foot, children }: { at: number; side: "left" | 
         width: 520,
         [side]: 150,
         textAlign: side === "left" ? "right" : "left",
-        opacity: Math.min(1, p * 2.5),
-        transform: `translateX(${dir * (1 - p) * 120}px)`,
+        opacity: Math.min(1, p * 1.8),
+        transform: `translateX(${dir * (1 - p) * 70}px)`,
+        filter: p < 0.98 ? `blur(${(1 - p) * 12}px)` : undefined,
       }}
     >
       <div style={{ fontFamily: FONT.body, fontSize: 30, color: C.textSecondary }}>{label}</div>
@@ -94,11 +96,11 @@ export function Hook({ dur }: { dur: number }) {
       id="hook"
       duration={dur}
       enter="cut"
-      exit="left"
+      exit="blur"
       keys={[
-        { t: 0, x: 960, y: 560, z: 1.45 },
-        { t: 1.2, x: 960, y: 540, z: 1 },
-        { t: 4, z: 1.06 },
+        { t: 0, x: 960, y: 560, z: 1.38 },
+        { t: 1.4, x: 960, y: 540, z: 1 },
+        { t: 4.5, z: 1.07 },
       ]}
     >
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
@@ -116,7 +118,7 @@ export function Hook({ dur }: { dur: number }) {
       </Stat>
       <div style={{ position: "absolute", left: 0, right: 0, bottom: 70, textAlign: "center" }}>
         <Title size={68}>
-          <Words text="That's an outlier." at={2.2} stagger={0.06} highlight={["outlier"]} />
+          <Words text="That's an outlier." at={2.15} stagger={0.12} highlight={["outlier"]} />
         </Title>
       </div>
     </Shot>

@@ -11,7 +11,7 @@ function Feed() {
   // Accelerating scroll: position is the integral of a rising speed.
   const offset = (t * 500 + t * t * 700) % 418;
   return (
-    <AbsoluteFill style={{ perspective: 1400, alignItems: "center", justifyContent: "center" }}>
+    <AbsoluteFill style={{ perspective: 1400, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
       <div
         style={{
           display: "grid",
@@ -35,15 +35,15 @@ function Feed() {
 
 export function Problem({ dur }: { dur: number }) {
   return (
-    <Shot id="problem" duration={dur} enter="left" exit="zoom" keys={[{ t: 0, z: 1 }, { t: 2, z: 1.12, r: -1.5 }]}>
+    <Shot id="problem" duration={dur} enter="blur" exit="push" keys={[{ t: 0, z: 1 }, { t: 2.5, z: 1.12, r: -1.5 }]}>
       <Feed />
       <AbsoluteFill style={{ background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,0,0,0.88), rgba(0,0,0,0.35) 80%)" }} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", textAlign: "center" }}>
         <Title size={100}>
-          <Words text="Finding them by hand?" at={0.2} stagger={0.05} />
+          <Words text="Finding them by hand?" at={0.15} stagger={0.09} />
         </Title>
         <Title size={100} style={{ color: C.muted, marginTop: 4 }}>
-          <Words text="Hours of scrolling." at={0.8} stagger={0.06} />
+          <Words text="Hours of scrolling." at={0.85} stagger={0.1} />
         </Title>
       </AbsoluteFill>
     </Shot>

@@ -4,18 +4,22 @@ import { C, FONT, GRADIENT_TEXT } from "../theme";
 
 /*
  * Motion primitives. Everything is timed in seconds so the video can render at any fps.
- * Eases mirror After Effects' speed graphs: a hard, fast start and a long, soft landing.
+ *
+ * Curves are fitted to the reference launch videos (refs/NOTES.md): optical-flow
+ * speed graphs from 22 launch films put element entrances on easeOutCubic and
+ * camera moves on easeInOutSine / easeInOutCubic, with most motion lasting
+ * 0.5–1.0s. Nothing in them is as snappy as expo-out, so neither is this.
  */
 
 export const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
-/** Expo-out: elements arriving. */
-export const OUT = Easing.bezier(0.16, 1, 0.3, 1);
-/** Strong ease in-out: camera moves and whips. */
-export const IN_OUT = Easing.bezier(0.76, 0, 0.24, 1);
-/** Gentle in-out: slow camera drifts. */
-export const DRIFT = Easing.bezier(0.45, 0, 0.25, 1);
-/** Overshoot: pops and stamps. */
-export const BACK = Easing.bezier(0.34, 1.56, 0.64, 1);
+/** easeOutCubic: elements arriving. */
+export const OUT = Easing.bezier(0.33, 1, 0.68, 1);
+/** easeInOutCubic: transitions and deliberate camera moves. */
+export const IN_OUT = Easing.bezier(0.65, 0, 0.35, 1);
+/** easeInOutSine: slow camera drifts and background moves. */
+export const DRIFT = Easing.bezier(0.37, 0, 0.63, 1);
+/** Light overshoot, used sparingly (the refs barely overshoot). */
+export const BACK = Easing.bezier(0.34, 1.32, 0.64, 1);
 
 /** Current time in seconds within the enclosing Sequence. */
 export function useTime() {
@@ -33,11 +37,20 @@ export function useProg(at: number, dur: number, easing = OUT) {
   return prog(useTime(), at, dur, easing);
 }
 
+/** One word resolving out of blur: the per-word reveal every reference uses. */
+function blurIn(p: number): CSSProperties {
+  return {
+    opacity: Math.min(1, p * 1.6),
+    filter: p < 0.999 ? `blur(${(1 - p) * 14}px)` : undefined,
+    transform: `translateY(${(1 - p) * 0.28}em) scale(${0.96 + 0.04 * p})`,
+  };
+}
+
 /**
- * Text that slides up out of a mask, word by word — the classic AE text reveal.
- * Each word is clipped by its own line box, so it appears to rise from nowhere.
+ * Text that resolves word by word out of a soft blur. Space for every word is
+ * reserved up front, so wrapped lines never jump.
  */
-export function Words({ text, at = 0, stagger = 0.04, dur = 0.7, style, highlight = [], gradient = false }: { text: string; at?: number; stagger?: number; dur?: number; style?: CSSProperties; highlight?: string[]; gradient?: boolean }) {
+export function Words({ text, at = 0, stagger = 0.07, dur = 0.6, style, highlight = [], gradient = false }: { text: string; at?: number; stagger?: number; dur?: number; style?: CSSProperties; highlight?: string[]; gradient?: boolean }) {
   const t = useTime();
   const words = text.split(" ");
   return (
@@ -46,19 +59,71 @@ export function Words({ text, at = 0, stagger = 0.04, dur = 0.7, style, highligh
         const p = prog(t, at + i * stagger, dur);
         const lit = gradient || highlight.includes(w.replace(/[.,?!]/g, ""));
         return (
-          <span key={i} style={{ display: "inline-block", overflow: "hidden", verticalAlign: "top", paddingBottom: "0.08em", marginBottom: "-0.08em" }}>
-            <span
-              style={{
-                display: "inline-block",
-                whiteSpace: "pre",
-                transform: `translateY(${(1 - p) * 105}%) rotate(${(1 - p) * 4}deg)`,
-                transformOrigin: "0 100%",
-                ...(lit ? GRADIENT_TEXT : null),
-              }}
-            >
-              {w}
-              {i < words.length - 1 ? " " : ""}
-            </span>
+          <span key={i} style={{ display: "inline-block", whiteSpace: "pre", ...blurIn(p) }}>
+            <span style={lit ? GRADIENT_TEXT : undefined}>{w}</span>
+            {i < words.length - 1 ? " " : ""}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+const measureCtx = typeof document !== "undefined" ? document.createElement("canvas").getContext("2d") : null;
+/** Pixel width of a string in a given font (fonts are loaded before the first frame renders). */
+function textWidth(s: string, font: string) {
+  if (!measureCtx) return s.length * 30;
+  measureCtx.font = font;
+  return measureCtx.measureText(s).width;
+}
+
+/**
+ * A single line that builds word by word and re-centres as it grows
+ * ("Introducing" → "Introducing the New" → "Introducing the New Market View").
+ * Each word's slot opens from zero width while the word blurs in, so the
+ * line glides sideways instead of jumping. `beats` are the arrival times.
+ */
+export function BuildLine({ words, beats, size, weight = 800, family = "'Schibsted Grotesk'", tracking = -0.035, color = C.text, highlight = [], dur = 0.55 }: { words: string[]; beats: number[]; size: number; weight?: number; family?: string; tracking?: number; color?: string; highlight?: string[]; dur?: number }) {
+  const t = useTime();
+  const font = `${weight} ${size}px ${family}`;
+  return (
+    <div style={{ display: "flex", justifyContent: "center", whiteSpace: "pre", fontFamily: `${family}, sans-serif`, fontWeight: weight, fontSize: size, letterSpacing: `${tracking}em`, color, lineHeight: 1.1 }}>
+      {words.map((w, i) => {
+        const slot = prog(t, beats[i] - 0.05, dur, IN_OUT);
+        const p = prog(t, beats[i], dur);
+        const full = textWidth(w + (i < words.length - 1 ? " " : ""), font) + w.length * tracking * size;
+        const lit = highlight.includes(w.replace(/[.,?!]/g, ""));
+        return (
+          <span key={i} style={{ display: "inline-block", width: full * slot, overflow: "visible" }}>
+            <span style={{ display: "inline-block", ...blurIn(p), ...(lit ? GRADIENT_TEXT : null) }}>{w}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * A slot inside a sentence whose word keeps changing (Pump.fun's "Trade [Solana / BNB / anything]").
+ * The slot's width eases between words so the surrounding sentence re-centres smoothly.
+ */
+export function SwapWord({ words, beats, size, weight = 800, family = "'Schibsted Grotesk'", tracking = -0.035, style }: { words: string[]; beats: number[]; size: number; weight?: number; family?: string; tracking?: number; style?: CSSProperties }) {
+  const t = useTime();
+  const font = `${weight} ${size}px ${family}`;
+  const widths = words.map((w) => textWidth(w, font) + w.length * tracking * size);
+  let i = 0;
+  while (i < beats.length - 1 && t >= beats[i + 1]) i++;
+  const into = prog(t, beats[i], 0.38, IN_OUT);
+  const width = i === 0 ? widths[0] : widths[i - 1] + (widths[i] - widths[i - 1]) * into;
+  return (
+    <span style={{ position: "relative", display: "inline-block", width, height: "1.1em", verticalAlign: "bottom" }}>
+      {words.map((w, k) => {
+        if (k !== i && k !== i - 1) return null;
+        const p = k === i ? (i === 0 ? prog(t, beats[0], 0.55) : into) : 1 - into;
+        const dir = k === i ? 1 : -1;
+        return (
+          <span key={k} style={{ position: "absolute", left: 0, top: 0, whiteSpace: "pre", ...style, opacity: p, filter: p < 0.999 ? `blur(${(1 - p) * 12}px)` : undefined, transform: `translateY(${(1 - p) * 0.45 * dir}em)` }}>
+            {w}
           </span>
         );
       })}
@@ -125,17 +190,22 @@ export function Glass({ children, style }: { children: ReactNode; style?: CSSPro
   );
 }
 
-/** A panel that swings up out of 3D perspective into place. */
-export function TiltIn({ children, at = 0, from = 24, dur = 1, style }: { children: ReactNode; at?: number; from?: number; dur?: number; style?: CSSProperties }) {
+/**
+ * A panel that settles out of 3D perspective into place, resolving from blur
+ * (Jupiter / Print / Omnipair style). Lands on an in-out curve, so it glides in.
+ */
+export function TiltIn({ children, at = 0, from = 22, yaw = -10, dur = 1.15, style }: { children: ReactNode; at?: number; from?: number; yaw?: number; dur?: number; style?: CSSProperties }) {
   const t = useTime();
-  const p = prog(t, at, dur);
+  const p = prog(t, at, dur, IN_OUT);
+  const o = prog(t, at, dur * 0.45, OUT);
   return (
-    <div style={{ perspective: 2200, ...style }}>
+    <div style={{ perspective: 2400, ...style }}>
       <div
         style={{
-          transform: `translateY(${(1 - p) * 160}px) rotateX(${(1 - p) * from}deg) scale(${0.92 + 0.08 * p})`,
-          transformOrigin: "50% 100%",
-          opacity: prog(t, at, dur * 0.35, Easing.linear),
+          transform: `translateY(${(1 - p) * 140}px) rotateX(${(1 - p) * from}deg) rotateY(${(1 - p) * yaw}deg) scale(${0.9 + 0.1 * p})`,
+          transformOrigin: "50% 60%",
+          opacity: o,
+          filter: p < 0.98 ? `blur(${(1 - p) * 10}px)` : undefined,
         }}
       >
         {children}

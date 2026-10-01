@@ -1,8 +1,8 @@
-import { Easing } from "remotion";
+import { AbsoluteFill, Easing } from "remotion";
 import { Shot } from "../components/Shot";
-import { BACK, Counter, Cursor, Glass, OUT, SearchGlyph, Typed, prog, useTime } from "../components/ui";
+import { BACK, Counter, Cursor, Glass, IN_OUT, SearchGlyph, Typed, prog, useTime } from "../components/ui";
 import { C, FONT, GRADIENT_TEXT } from "../theme";
-import { Split, Stack } from "./Layouts";
+import { Stage } from "./Layouts";
 
 const avatar = (hue: number, size = 64) => ({
   width: size,
@@ -64,43 +64,43 @@ export function Research({ dur }: { dur: number }) {
     <Shot
       id="research"
       duration={dur}
+      enter="rise"
+      exit="blur"
       keys={[
-        { t: 0, x: 960, y: 540, z: 1 },
-        { t: 0.5, x: 1000, y: 520, z: 1.04 },
-        { t: 1.2, x: 1290, y: 400, z: 1.28 },
-        { t: 1.9, x: 1330, y: 560, z: 1.2 },
-        { t: 2.8, x: 990, y: 540, z: 1.0 },
+        { t: 0, x: 960, y: 560, z: 1 },
+        { t: 1.0, x: 820, y: 430, z: 1.14 },
+        { t: 2.5, x: 980, y: 600, z: 1.1 },
       ]}
     >
-      <Split title="Find breakout Shorts channels in any niche" highlight={["breakout"]}>
-        <Glass style={{ padding: 36 }}>
+      <Stage scale={1.55}>
+        <Glass style={{ padding: 36, position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "22px 26px", borderRadius: 18, background: C.control, border: `1px solid ${C.borderStrong}`, color: C.text, fontFamily: FONT.body, fontSize: 32 }}>
             <span style={{ color: C.muted }}>
               <SearchGlyph />
             </span>
-            <Typed text="minecraft builds" at={0.45} cps={26} />
+            <Typed text="minecraft builds" at={0.3} cps={30} />
           </div>
           <div style={{ display: "flex", gap: 14, marginTop: 24 }}>
-            <Chip label="subs < 10K" at={1.0} active={1.3} />
-            <Chip label="avg views > 100K" at={1.05} active={1.5} />
-            <Chip label="age < 90d" at={1.1} />
+            <Chip label="subs < 10K" at={0.7} active={0.97} />
+            <Chip label="avg views > 100K" at={0.75} active={1.17} />
+            <Chip label="age < 90d" at={0.8} />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 28 }}>
             {CHANNELS.map((c, i) => (
-              <ChannelRow key={c.name} {...c} at={1.7 + i * 0.1} />
+              <ChannelRow key={c.name} {...c} at={1.25 + i * 0.09} />
             ))}
           </div>
+          <Cursor
+            path={[
+              [0.7, 640, 330],
+              [0.95, 120, 168],
+              [1.15, 330, 168],
+              [2.2, 560, 330],
+            ]}
+            clicks={[0.97, 1.17]}
+          />
         </Glass>
-      </Split>
-      <Cursor
-        path={[
-          [1.0, 1500, 760],
-          [1.28, 1085, 405],
-          [1.48, 1300, 405],
-          [2.4, 1450, 640],
-        ]}
-        clicks={[1.3, 1.5]}
-      />
+      </Stage>
     </Shot>
   );
 }
@@ -111,21 +111,21 @@ const CHART = "M0 104 C40 100 60 96 90 90 S150 84 180 70 S240 30 270 22 S310 10 
 
 export function Growth({ dur }: { dur: number }) {
   const t = useTime();
-  const draw = prog(t, 0.35, 1.1, Easing.bezier(0.5, 0, 0.2, 1));
+  const draw = prog(t, 0.45, 1.2, Easing.bezier(0.65, 0, 0.35, 1));
   const pulse = 1 + 0.35 * Math.abs(Math.sin(t * 4));
   return (
     <Shot
       id="growth"
       duration={dur}
-      enter="left"
-      exit="up"
+      enter="push"
+      exit="cut"
       keys={[
-        { t: 0, x: 600, y: 520, z: 1.3 },
-        { t: 0.9, x: 780, y: 540, z: 1.08 },
-        { t: 3.0, x: 930, y: 540, z: 1.0 },
+        { t: 0, x: 900, y: 520, z: 1.04 },
+        { t: 1.6, x: 1060, y: 470, z: 1.16 },
+        { t: 3.0, x: 1100, y: 500, z: 1.2 },
       ]}
     >
-      <Split flip title="Catch channels in the middle of a breakout" highlight={["breakout"]}>
+      <Stage scale={1.42} tilt={18} yaw={10}>
         <Glass style={{ padding: 36 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
             <div style={avatar(275, 72)} />
@@ -164,14 +164,14 @@ export function Growth({ dur }: { dur: number }) {
             ].map((k, i) => (
               <div key={k.l} style={{ padding: "20px 24px", borderRadius: 18, background: "rgba(255,255,255,0.035)", border: `1px solid ${C.border}` }}>
                 <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 56, color: C.good }}>
-                  <Counter value={k.v} at={0.6 + i * 0.12} dur={1.1} decimals={1} prefix="+" suffix={k.s} />
+                  <Counter value={k.v} at={0.7 + i * 0.12} dur={1.2} decimals={1} prefix="+" suffix={k.s} />
                 </div>
                 <div style={{ fontFamily: FONT.body, fontSize: 24, color: C.muted }}>{k.l}</div>
               </div>
             ))}
           </div>
         </Glass>
-      </Split>
+      </Stage>
     </Shot>
   );
 }
@@ -188,7 +188,7 @@ const PICKS = [
 
 function PickCard({ p, i }: { p: (typeof PICKS)[number]; i: number }) {
   const t = useTime();
-  const s = prog(t, 0.2 + i * 0.07, 0.8, OUT);
+  const s = prog(t, 0.1 + i * 0.08, 0.9, IN_OUT);
   return (
     <div
       style={{
@@ -198,8 +198,9 @@ function PickCard({ p, i }: { p: (typeof PICKS)[number]; i: number }) {
         background: C.surface,
         border: `1px solid ${C.glassBorder}`,
         boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
-        transform: `translateY(${(1 - s) * 420}px) rotate(${(1 - s) * (i - 2) * 10}deg)`,
-        opacity: Math.min(1, s * 3),
+        transform: `translateY(${(1 - s) * 380}px) rotate(${(1 - s) * (i - 2) * 6}deg)`,
+        opacity: Math.min(1, s * 2.5),
+        filter: s < 0.98 ? `blur(${(1 - s) * 10}px)` : undefined,
       }}
     >
       <div style={{ height: 300, position: "relative", background: `linear-gradient(160deg, hsl(${p.hue},55%,42%), hsl(${p.hue + 40},50%,14%))` }}>
@@ -218,25 +219,25 @@ function PickCard({ p, i }: { p: (typeof PICKS)[number]; i: number }) {
 }
 
 export function Picks({ dur }: { dur: number }) {
+  // A slow lateral pan across the row, as Lovable and Jupiter do over card grids.
   return (
     <Shot
       id="picks"
       duration={dur}
-      enter="up"
-      exit="left"
+      enter="rise"
+      exit="slide"
       keys={[
-        { t: 0, x: 960, y: 500, z: 1 },
-        { t: 0.7, x: 560, y: 520, z: 1.2 },
-        { t: 2.3, x: 1340, y: 540, z: 1.16 },
+        { t: 0, x: 760, y: 560, z: 1.18 },
+        { t: 2.5, x: 1180, y: 540, z: 1.22 },
       ]}
     >
-      <Stack title="Five breakout channels, picked every day" highlight={["Five"]} width={1640}>
-        <div style={{ display: "flex", gap: 28, justifyContent: "center" }}>
+      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
+        <div style={{ display: "flex", gap: 28, justifyContent: "center", transform: "scale(1.08)" }}>
           {PICKS.map((p, i) => (
             <PickCard key={p.niche} p={p} i={i} />
           ))}
         </div>
-      </Stack>
+      </AbsoluteFill>
     </Shot>
   );
 }
@@ -255,23 +256,24 @@ function KV({ label, value, at }: { label: string; value: React.ReactNode; at: n
 
 export function Analyze({ dur }: { dur: number }) {
   const t = useTime();
-  const fill = prog(t, 1.05, 1.3, Easing.bezier(0.3, 0, 0.1, 1)) * 0.86;
+  const fill = prog(t, 0.8, 1.4, Easing.bezier(0.33, 1, 0.68, 1)) * 0.86;
   const circ = 2 * Math.PI * 50;
-  const pasted = t >= 0.55;
+  const pasted = t >= 0.5;
   return (
     <Shot
       id="analyze"
       duration={dur}
+      enter="blur"
+      exit="blur"
       keys={[
         { t: 0, x: 960, y: 520, z: 1 },
-        { t: 0.45, x: 1150, y: 420, z: 1.3 },
-        { t: 1.0, x: 1150, y: 420, z: 1.3 },
-        { t: 1.6, x: 760, y: 680, z: 1.22 },
-        { t: 3.0, x: 960, y: 560, z: 1.02 },
+        { t: 0.7, x: 1060, y: 420, z: 1.1 },
+        { t: 1.9, x: 760, y: 600, z: 1.24 },
+        { t: 3.0, x: 820, y: 580, z: 1.28 },
       ]}
     >
-      <Stack title="See exactly how far a video beat its channel" highlight={["beat"]}>
-        <Glass style={{ padding: 40 }}>
+      <Stage design={1180} scale={1.22} tilt={20} yaw={-8}>
+        <Glass style={{ padding: 40, position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "20px 26px", borderRadius: 18, background: C.control, border: `1px solid ${pasted ? "rgba(139,92,246,0.6)" : C.borderStrong}`, color: C.text, fontFamily: FONT.body, fontSize: 28 }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={C.muted} strokeWidth="2" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg>
             <span style={{ flex: 1 }}>{pasted ? "youtube.com/shorts/c1tyIn60s" : <span style={{ color: C.muted }}>Paste any video link…</span>}</span>
@@ -291,27 +293,27 @@ export function Analyze({ dur }: { dur: number }) {
               </svg>
               <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 92, letterSpacing: "-0.04em", ...GRADIENT_TEXT }}>
-                  <Counter value={79} at={1.05} dur={1.3} suffix="×" />
+                  <Counter value={79} at={0.8} dur={1.4} suffix="×" />
                 </div>
                 <div style={{ fontFamily: FONT.body, fontSize: 24, color: C.muted }}>outlier score</div>
               </div>
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
-              <KV label="Views / day" at={1.15} value={<Counter value={586} at={1.15} dur={1.1} suffix="K" />} />
-              <KV label="Engagement" at={1.22} value={<Counter value={7.4} at={1.22} dur={1.1} decimals={1} suffix="%" />} />
-              <KV label="Channel median" at={1.29} value={<Counter value={52} at={1.29} dur={1.1} suffix="K" />} />
+              <KV label="Views / day" at={0.9} value={<Counter value={586} at={0.9} dur={1.2} suffix="K" />} />
+              <KV label="Engagement" at={0.98} value={<Counter value={7.4} at={0.98} dur={1.2} decimals={1} suffix="%" />} />
+              <KV label="Channel median" at={1.06} value={<Counter value={52} at={1.06} dur={1.2} suffix="K" />} />
             </div>
           </div>
+          <Cursor
+            path={[
+              [0.15, 980, 260],
+              [0.45, 1040, 70],
+              [1.4, 1060, 300],
+            ]}
+            clicks={[0.48]}
+          />
         </Glass>
-      </Stack>
-      <Cursor
-        path={[
-          [0.2, 1250, 700],
-          [0.5, 1405, 392],
-          [1.4, 1560, 600],
-        ]}
-        clicks={[0.52]}
-      />
+      </Stage>
     </Shot>
   );
 }
@@ -327,12 +329,12 @@ const SCRIPT = [
 
 function ScriptLine({ tag, text, at }: { tag: string; text: string; at: number }) {
   const t = useTime();
-  const p = prog(t, at - 0.05, 0.4);
+  const p = prog(t, at - 0.05, 0.45);
   return (
-    <div style={{ display: "flex", gap: 22, alignItems: "baseline", opacity: p, transform: `translateY(${(1 - p) * 16}px)` }}>
+    <div style={{ display: "flex", gap: 22, alignItems: "baseline", opacity: p, transform: `translateY(${(1 - p) * 16}px)`, filter: p < 0.98 ? `blur(${(1 - p) * 8}px)` : undefined }}>
       <span style={{ flexShrink: 0, width: 130, fontFamily: FONT.body, fontWeight: 700, fontSize: 20, letterSpacing: "0.08em", color: C.accentText }}>{tag}</span>
       <span style={{ fontFamily: FONT.body, fontSize: 32, color: C.text, lineHeight: 1.35 }}>
-        <Typed text={text} at={at} cps={70} caret={false} />
+        <Typed text={text} at={at} cps={95} caret={false} />
       </span>
     </div>
   );
@@ -343,15 +345,14 @@ export function Script({ dur }: { dur: number }) {
     <Shot
       id="script"
       duration={dur}
-      exit="zoom"
+      enter="rise"
+      exit="cut"
       keys={[
         { t: 0, x: 960, y: 540, z: 1 },
-        { t: 0.6, x: 1300, y: 480, z: 1.16 },
-        { t: 2.4, x: 1320, y: 590, z: 1.14 },
-        { t: 3.5, x: 1200, y: 560, z: 1.1 },
+        { t: 2.5, x: 990, y: 600, z: 1.16 },
       ]}
     >
-      <Split title="Then turn the idea into a script" highlight={["script"]}>
+      <Stage scale={1.55} tilt={20} yaw={9}>
         <Glass style={{ padding: 40 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
             <span style={{ fontFamily: FONT.body, fontSize: 24, color: C.muted }}>Based on: “I built a whole city in 60 seconds”</span>
@@ -359,11 +360,11 @@ export function Script({ dur }: { dur: number }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 24, minHeight: 360 }}>
             {SCRIPT.map((l, i) => (
-              <ScriptLine key={l.tag} {...l} at={0.55 + i * 0.5} />
+              <ScriptLine key={l.tag} {...l} at={0.3 + i * 0.3} />
             ))}
           </div>
         </Glass>
-      </Split>
+      </Stage>
     </Shot>
   );
 }

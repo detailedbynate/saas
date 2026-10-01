@@ -2,3 +2,10 @@ node_modules
 out/*.png
 .DS_Store
 out/*-preview.mp4
+# Third-party reference clips and frames pulled from them (see refs/NOTES.md)
+refs/src/
+refs/sheets/
+refs/cuts/
+refs/page.html
+refs/bases.txt
+refs/ids.txt
