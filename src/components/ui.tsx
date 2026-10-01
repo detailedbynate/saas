@@ -40,9 +40,9 @@ export function useProg(at: number, dur: number, easing = OUT) {
 /** One word resolving out of blur: the per-word reveal every reference uses. */
 function blurIn(p: number): CSSProperties {
   return {
-    opacity: Math.min(1, p * 1.6),
-    filter: p < 0.999 ? `blur(${(1 - p) * 14}px)` : undefined,
-    transform: `translateY(${(1 - p) * 0.28}em) scale(${0.96 + 0.04 * p})`,
+    opacity: Math.min(1, p * 1.35),
+    filter: p < 0.995 ? `blur(${(1 - p) * 10}px)` : undefined,
+    transform: `translate3d(0, ${(1 - p) * 0.32}em, 0) scale(${0.97 + 0.03 * p})`,
   };
 }
 
@@ -50,7 +50,7 @@ function blurIn(p: number): CSSProperties {
  * Text that resolves word by word out of a soft blur. Space for every word is
  * reserved up front, so wrapped lines never jump.
  */
-export function Words({ text, at = 0, stagger = 0.07, dur = 0.6, style, highlight = [], gradient = false }: { text: string; at?: number; stagger?: number; dur?: number; style?: CSSProperties; highlight?: string[]; gradient?: boolean }) {
+export function Words({ text, at = 0, stagger = 0.11, dur = 0.9, style, highlight = [], gradient = false }: { text: string; at?: number; stagger?: number; dur?: number; style?: CSSProperties; highlight?: string[]; gradient?: boolean }) {
   const t = useTime();
   const words = text.split(" ");
   return (
@@ -83,13 +83,13 @@ function textWidth(s: string, font: string) {
  * Each word's slot opens from zero width while the word blurs in, so the
  * line glides sideways instead of jumping. `beats` are the arrival times.
  */
-export function BuildLine({ words, beats, size, weight = 800, family = "'Schibsted Grotesk'", tracking = -0.035, color = C.text, highlight = [], dur = 0.55 }: { words: string[]; beats: number[]; size: number; weight?: number; family?: string; tracking?: number; color?: string; highlight?: string[]; dur?: number }) {
+export function BuildLine({ words, beats, size, weight = 800, family = "'Schibsted Grotesk'", tracking = -0.035, color = C.text, highlight = [], dur = 0.85 }: { words: string[]; beats: number[]; size: number; weight?: number; family?: string; tracking?: number; color?: string; highlight?: string[]; dur?: number }) {
   const t = useTime();
   const font = `${weight} ${size}px ${family}`;
   return (
     <div style={{ display: "flex", justifyContent: "center", whiteSpace: "pre", fontFamily: `${family}, sans-serif`, fontWeight: weight, fontSize: size, letterSpacing: `${tracking}em`, color, lineHeight: 1.1 }}>
       {words.map((w, i) => {
-        const slot = prog(t, beats[i] - 0.05, dur, IN_OUT);
+        const slot = prog(t, beats[i] - 0.08, dur, IN_OUT);
         const p = prog(t, beats[i], dur);
         const full = textWidth(w + (i < words.length - 1 ? " " : ""), font) + w.length * tracking * size;
         const lit = highlight.includes(w.replace(/[.,?!]/g, ""));
@@ -113,13 +113,13 @@ export function SwapWord({ words, beats, size, weight = 800, family = "'Schibste
   const widths = words.map((w) => textWidth(w, font) + w.length * tracking * size);
   let i = 0;
   while (i < beats.length - 1 && t >= beats[i + 1]) i++;
-  const into = prog(t, beats[i], 0.38, IN_OUT);
+  const into = prog(t, beats[i], 0.6, IN_OUT);
   const width = i === 0 ? widths[0] : widths[i - 1] + (widths[i] - widths[i - 1]) * into;
   return (
     <span style={{ position: "relative", display: "inline-block", width, height: "1.1em", verticalAlign: "bottom" }}>
       {words.map((w, k) => {
         if (k !== i && k !== i - 1) return null;
-        const p = k === i ? (i === 0 ? prog(t, beats[0], 0.55) : into) : 1 - into;
+        const p = k === i ? (i === 0 ? prog(t, beats[0], 0.85) : into) : 1 - into;
         const dir = k === i ? 1 : -1;
         return (
           <span key={k} style={{ position: "absolute", left: 0, top: 0, whiteSpace: "pre", ...style, opacity: p, filter: p < 0.999 ? `blur(${(1 - p) * 12}px)` : undefined, transform: `translateY(${(1 - p) * 0.45 * dir}em)` }}>
@@ -132,13 +132,13 @@ export function SwapWord({ words, beats, size, weight = 800, family = "'Schibste
 }
 
 /** Fade + rise for small UI bits. */
-export function Rise({ at, children, dist = 24, dur = 0.6, style }: { at: number; children: ReactNode; dist?: number; dur?: number; style?: CSSProperties }) {
+export function Rise({ at, children, dist = 24, dur = 0.9, style }: { at: number; children: ReactNode; dist?: number; dur?: number; style?: CSSProperties }) {
   const p = useProg(at, dur);
   return <div style={{ opacity: Math.min(1, p * 1.8), transform: `translateY(${(1 - p) * dist}px)`, ...style }}>{children}</div>;
 }
 
 /** Scale in with a little overshoot. */
-export function Pop({ at, children, dur = 0.5, from = 0.4, style }: { at: number; children: ReactNode; dur?: number; from?: number; style?: CSSProperties }) {
+export function Pop({ at, children, dur = 0.8, from = 0.6, style }: { at: number; children: ReactNode; dur?: number; from?: number; style?: CSSProperties }) {
   const t = useTime();
   const p = prog(t, at, dur, BACK);
   const o = prog(t, at, dur * 0.4, Easing.linear);
@@ -146,7 +146,7 @@ export function Pop({ at, children, dur = 0.5, from = 0.4, style }: { at: number
 }
 
 export function Eyebrow({ children, at = 0 }: { children: ReactNode; at?: number }) {
-  const p = useProg(at, 0.6);
+  const p = useProg(at, 0.9);
   return (
     <div
       style={{
@@ -194,10 +194,10 @@ export function Glass({ children, style }: { children: ReactNode; style?: CSSPro
  * A panel that settles out of 3D perspective into place, resolving from blur
  * (Jupiter / Print / Omnipair style). Lands on an in-out curve, so it glides in.
  */
-export function TiltIn({ children, at = 0, from = 22, yaw = -10, dur = 1.15, style }: { children: ReactNode; at?: number; from?: number; yaw?: number; dur?: number; style?: CSSProperties }) {
+export function TiltIn({ children, at = 0, from = 20, yaw = -10, dur = 1.7, style }: { children: ReactNode; at?: number; from?: number; yaw?: number; dur?: number; style?: CSSProperties }) {
   const t = useTime();
   const p = prog(t, at, dur, IN_OUT);
-  const o = prog(t, at, dur * 0.45, OUT);
+  const o = prog(t, at, dur * 0.55, OUT);
   return (
     <div style={{ perspective: 2400, ...style }}>
       <div
@@ -205,7 +205,7 @@ export function TiltIn({ children, at = 0, from = 22, yaw = -10, dur = 1.15, sty
           transform: `translateY(${(1 - p) * 140}px) rotateX(${(1 - p) * from}deg) rotateY(${(1 - p) * yaw}deg) scale(${0.9 + 0.1 * p})`,
           transformOrigin: "50% 60%",
           opacity: o,
-          filter: p < 0.98 ? `blur(${(1 - p) * 10}px)` : undefined,
+          filter: p < 0.995 ? `blur(${(1 - p) * 8}px)` : undefined,
         }}
       >
         {children}
@@ -272,7 +272,7 @@ export function Cursor({ path, clicks = [] }: { path: [number, number, number][]
   return (
     <div style={{ position: "absolute", left: x, top: y, opacity, pointerEvents: "none", zIndex: 50 }}>
       {clicks.map((c) => {
-        const p = prog(t, c, 0.4);
+        const p = prog(t, c, 0.6);
         if (t < c || p >= 1) return null;
         return <div key={c} style={{ position: "absolute", left: -30, top: -30, width: 60, height: 60, borderRadius: 99, border: `3px solid ${C.accentText}`, opacity: 1 - p, transform: `scale(${0.4 + p})` }} />;
       })}

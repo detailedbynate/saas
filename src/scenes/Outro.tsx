@@ -13,16 +13,16 @@ export function Why({ dur }: { dur: number }) {
   const t = useTime();
   const each = dur / WHY.length;
   return (
-    <Shot id="why" duration={dur} enter="cut" exit="push" keys={[{ t: 0, z: 0.96 }, { t: dur + 0.5, z: 1.1 }]}>
+    <Shot id="why" duration={dur} enter="cut" exit="push" keys={[{ t: 0, x: 880, z: 0.9, r: -1.2 }, { t: dur / 2, x: 960, z: 1.04, r: 0 }, { t: dur + 0.9, x: 1050, z: 1.22, r: 1.2 }]}>
       {WHY.map((w, i) => {
         const at = i * each;
         const last = i === WHY.length - 1;
-        const out = last ? 0 : prog(t, at + each - 0.14, 0.16, Easing.in(Easing.quad));
+        const out = last ? 0 : prog(t, at + each - 0.25, 0.28, IN_OUT);
         if (t < at - 0.05 || out >= 1) return null;
         return (
-          <AbsoluteFill key={i} style={{ alignItems: "center", justifyContent: "center", textAlign: "center", opacity: 1 - out, filter: out > 0 ? `blur(${out * 18}px)` : undefined }}>
+          <AbsoluteFill key={i} style={{ alignItems: "center", justifyContent: "center", textAlign: "center", opacity: 1 - out, filter: out > 0 ? `blur(${out * 18}px)` : undefined, transform: `translate3d(${(i % 2 ? -1 : 1) * (t - at) * 22}px, 0, 0) scale(${1 + (t - at) * 0.045})` }}>
             <Title size={140} style={{ maxWidth: 1650 }}>
-              <Words text={w} at={at} stagger={0.045} dur={0.32} gradient={last} />
+              <Words text={w} at={at} stagger={0.08} dur={0.6} gradient={last} />
             </Title>
           </AbsoluteFill>
         );
@@ -32,35 +32,35 @@ export function Why({ dur }: { dur: number }) {
 }
 
 /** Where the price beat hands over to the end card, in seconds into the CTA. */
-const END_CARD = 3.5;
+const END_CARD = 3.0;
 
 /** Pricing hit, then a short end card: logo, wordmark and the URL being clicked. */
 export function Cta({ dur }: { dur: number }) {
   const t = useTime();
   // --- Price beat
-  const logo = prog(t, 0, 0.6, BACK);
-  const strike = prog(t, 0.75, 0.35, IN_OUT);
-  const newPrice = prog(t, 0.85, 0.55, BACK);
-  const away = prog(t, END_CARD - 0.25, 0.5, IN_OUT);
+  const logo = prog(t, 0, 1.0, BACK);
+  const strike = prog(t, 1.1, 0.6, IN_OUT);
+  const newPrice = prog(t, 1.25, 0.9, BACK);
+  const away = prog(t, END_CARD - 0.4, 0.8, IN_OUT);
   // --- End card
-  const card = prog(t, END_CARD, 0.7, OUT);
-  const pill = prog(t, END_CARD + 0.45, 0.6, OUT);
-  const click = END_CARD + 1.25;
+  const card = prog(t, END_CARD, 1.1, OUT);
+  const pill = prog(t, END_CARD + 0.8, 0.9, OUT);
+  const click = END_CARD + 1.9;
   const pressed = t >= click && t < click + 0.1;
   const shimmer = prog(t, click + 0.05, 0.8, Easing.bezier(0.4, 0, 0.2, 1));
-  const end = prog(t, dur - 0.6, 0.6, Easing.in(Easing.cubic));
+  const end = prog(t, dur - 0.7, 0.7, IN_OUT);
   return (
-    <Shot id="cta" duration={dur} enter="push" exit="cut" keys={[{ t: 0, z: 1.06 }, { t: 1.4, z: 1 }, { t: dur, z: 1.04 }]}>
+    <Shot id="cta" duration={dur} enter="push" exit="cut" keys={[{ t: 0, x: 900, y: 560, z: 1.12, r: -1 }, { t: 2.0, x: 960, y: 540, z: 1.0, r: 0 }, { t: 3.4, x: 940, y: 560, z: 0.98, r: 0.4 }, { t: dur, x: 990, y: 520, z: 1.14, r: -0.6 }]}>
       {away < 1 ? (
         <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", textAlign: "center", opacity: 1 - away, filter: away > 0 ? `blur(${away * 24}px)` : undefined, transform: `scale(${1 + away * 0.06})` }}>
           <div style={{ transform: `scale(${0.4 + 0.6 * logo})`, opacity: Math.min(1, logo * 2.5), filter: "drop-shadow(0 0 50px rgba(139,92,246,0.7))" }}>
             <Logo size={130} />
           </div>
           <Title size={112} style={{ marginTop: 34 }}>
-            <Words text="Try Pro free for 3 days" at={0.1} stagger={0.07} highlight={["free"]} />
+            <Words text="Try Pro free for 3 days" at={0.3} stagger={0.1} highlight={["free"]} />
           </Title>
           <div style={{ display: "flex", alignItems: "baseline", gap: 28, marginTop: 26, fontFamily: FONT.display, fontWeight: 800 }}>
-            <span style={{ position: "relative", fontSize: 64, color: C.muted, opacity: prog(t, 0.5, 0.35) }}>
+            <span style={{ position: "relative", fontSize: 64, color: C.muted, opacity: prog(t, 0.8, 0.6) }}>
               $15
               <span style={{ position: "absolute", left: -6, right: -6, top: "52%", height: 6, borderRadius: 9, background: "#f87171", transform: `scaleX(${strike})`, transformOrigin: "left" }} />
             </span>
@@ -79,7 +79,7 @@ export function Cta({ dur }: { dur: number }) {
             <Title size={150} style={{ letterSpacing: "-0.05em" }}>Outlier</Title>
           </div>
           <div style={{ marginTop: 34 }}>
-            <BuildLine words={["Find", "your", "next", "outlier."]} beats={[END_CARD + 0.25, END_CARD + 0.37, END_CARD + 0.49, END_CARD + 0.61]} size={52} weight={700} color={C.textSecondary} highlight={["outlier"]} />
+            <BuildLine words={["Find", "your", "next", "outlier."]} beats={[END_CARD + 0.4, END_CARD + 0.58, END_CARD + 0.76, END_CARD + 0.94]} size={52} weight={700} color={C.textSecondary} highlight={["outlier"]} />
           </div>
           <div
             style={{
@@ -104,7 +104,7 @@ export function Cta({ dur }: { dur: number }) {
           </div>
           <Cursor
             path={[
-              [END_CARD + 0.7, 1440, 1040],
+              [END_CARD + 1.0, 1440, 1040],
               [click - 0.05, 1010, 790],
               [dur, 1010, 790],
             ]}

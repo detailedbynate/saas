@@ -6,9 +6,9 @@ import { C, FONT, GRADIENT_TEXT } from "../theme";
 /** A Short from a tiny channel whose views blow past millions. */
 function ShortCard() {
   const t = useTime();
-  const s = prog(t, 0, 1.0, IN_OUT);
-  const badge = prog(t, 1.75, 0.5, BACK);
-  const glow = prog(t, 1.4, 0.6);
+  const s = prog(t, 0, 1.5, IN_OUT);
+  const badge = prog(t, 2.6, 0.8, BACK);
+  const glow = prog(t, 2.2, 1.0);
   return (
     <div
       style={{
@@ -68,7 +68,7 @@ function ShortCard() {
 
 function Stat({ at, side, label, foot, children }: { at: number; side: "left" | "right"; label: string; foot: string; children: React.ReactNode }) {
   const t = useTime();
-  const p = prog(t, at, 0.75, OUT);
+  const p = prog(t, at, 1.1, OUT);
   const dir = side === "left" ? -1 : 1;
   return (
     <div
@@ -98,27 +98,28 @@ export function Hook({ dur }: { dur: number }) {
       enter="cut"
       exit="blur"
       keys={[
-        { t: 0, x: 960, y: 560, z: 1.38 },
-        { t: 1.4, x: 960, y: 540, z: 1 },
-        { t: 4.5, z: 1.07 },
+        { t: 0, x: 900, y: 580, z: 1.36, r: -1.2 },
+        { t: 2.0, x: 950, y: 545, z: 1.04, r: 0 },
+        { t: 3.8, x: 1000, y: 560, z: 1.1, r: 0.6 },
+        { t: 5.9, x: 1010, y: 610, z: 1.2, r: 1 },
       ]}
     >
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
         <ShortCard />
       </AbsoluteFill>
-      <Stat at={0.35} side="left" label="This channel has" foot="subscribers">
+      <Stat at={0.7} side="left" label="This channel has" foot="subscribers">
         <Title size={108}>
-          <Counter value={2140} at={0.35} dur={0.7} />
+          <Counter value={2140} at={0.7} dur={1.4} />
         </Title>
       </Stat>
-      <Stat at={0.85} side="right" label="Its latest Short got" foot="views">
+      <Stat at={1.4} side="right" label="Its latest Short got" foot="views">
         <Title size={108} style={GRADIENT_TEXT}>
-          <Counter value={4.1} at={0.85} dur={1.0} decimals={1} suffix="M" />
+          <Counter value={4.1} at={1.4} dur={1.8} decimals={1} suffix="M" />
         </Title>
       </Stat>
       <div style={{ position: "absolute", left: 0, right: 0, bottom: 70, textAlign: "center" }}>
         <Title size={68}>
-          <Words text="That's an outlier." at={2.15} stagger={0.12} highlight={["outlier"]} />
+          <Words text="That's an outlier." at={3.0} stagger={0.16} dur={1.0} highlight={["outlier"]} />
         </Title>
       </div>
     </Shot>

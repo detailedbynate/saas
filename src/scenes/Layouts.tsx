@@ -1,67 +1,59 @@
 import type { ReactNode } from "react";
 import { AbsoluteFill } from "remotion";
-import { Shot, type Key, type Move } from "../components/Shot";
-import { BuildLine, DRIFT, OUT, TiltIn, prog, useTime } from "../components/ui";
-import { C } from "../theme";
+import { Eyebrow, TiltIn, Title, Words, useTime } from "../components/ui";
 
-/**
- * The product, full frame. Panels are designed at `design` px wide and scaled up
- * so the UI fills the shot, the way the references frame their product beats.
- * Panel centre sits at (960, 540) on the stage, so camera keys can aim at it.
+/*
+ * Stage geometry, so camera keys in the scenes can aim at things:
+ *   Side:  caption centre ≈ (505, 540), panel centre ≈ (1285, 540). Flipped: caption ≈ (1415, 540), panel ≈ (635, 540).
+ *   Over:  caption centre ≈ (960, 250), content centre ≈ (960, 640).
  */
-export function Stage({ children, design = 820, scale = 1.6, tilt = 22, yaw = -10, at = 0 }: { children: ReactNode; design?: number; scale?: number; tilt?: number; yaw?: number; at?: number }) {
+
+/** The caption keeps creeping sideways after it lands, so text is never parked either. */
+function Caption({ eyebrow, title, highlight, align, size }: { eyebrow?: string; title: string; highlight: string[]; align: "left" | "right" | "center"; size: number }) {
+  const t = useTime();
+  const drift = (align === "right" ? 1 : -1) * t * 7;
   return (
-    <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
-      <div style={{ width: design, transform: `scale(${scale})` }}>
-        <TiltIn at={at} from={tilt} yaw={yaw}>
-          {children}
-        </TiltIn>
+    <div style={{ textAlign: align, transform: `translate3d(${align === "center" ? 0 : drift}px, 0, 0)` }}>
+      {eyebrow ? (
+        <div style={{ marginBottom: 26 }}>
+          <Eyebrow at={0.25}>{eyebrow}</Eyebrow>
+        </div>
+      ) : null}
+      <Title size={size}>
+        <Words text={title} at={0.45} highlight={highlight} />
+      </Title>
+    </div>
+  );
+}
+
+/** Caption on one side, the product on the other. */
+export function Side({ eyebrow, title, highlight = [], flip = false, children, design = 820, scale = 1, panelAt = 0.6, tilt = 18 }: { eyebrow?: string; title: string; highlight?: string[]; flip?: boolean; children: ReactNode; design?: number; scale?: number; panelAt?: number; tilt?: number }) {
+  return (
+    <AbsoluteFill style={{ flexDirection: flip ? "row-reverse" : "row", alignItems: "center", justifyContent: "center", gap: 90 }}>
+      <div style={{ width: 560 }}>
+        <Caption eyebrow={eyebrow} title={title} highlight={highlight} align={flip ? "right" : "left"} size={80} />
+      </div>
+      <div style={{ width: design * scale, display: "flex", justifyContent: "center" }}>
+        <div style={{ width: design, transform: `scale(${scale})`, flexShrink: 0 }}>
+          <TiltIn at={panelAt} from={tilt} yaw={flip ? 12 : -12}>
+            {children}
+          </TiltIn>
+        </div>
       </div>
     </AbsoluteFill>
   );
 }
 
-/** A huge soft ring of light rising behind the type, like the arcs in Jupiter's and Omnipair's films. */
-function Arc({ from, to }: { from: number; to: number }) {
-  const t = useTime();
-  const p = prog(t, 0, 1.4, DRIFT);
-  const y = from + (to - from) * p;
+/** Caption on top, wide content below. */
+export function Over({ eyebrow, title, highlight = [], children, design = 1180, scale = 1, panelAt = 0.6, tilt = 18 }: { eyebrow?: string; title: string; highlight?: string[]; children: ReactNode; design?: number; scale?: number; panelAt?: number; tilt?: number }) {
   return (
-    <AbsoluteFill style={{ overflow: "hidden" }}>
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: y,
-          width: 2600,
-          height: 1500,
-          marginLeft: -1300,
-          borderRadius: "50%",
-          boxShadow: `0 0 0 3px rgba(196,181,253,0.55), 0 0 90px 30px rgba(139,92,246,0.55), inset 0 0 160px 40px rgba(139,92,246,0.35)`,
-          filter: "blur(6px)",
-          opacity: 0.35 + 0.65 * prog(t, 0, 0.6, OUT),
-        }}
-      />
-      <AbsoluteFill style={{ background: `radial-gradient(ellipse 50% 38% at 50% 50%, rgba(0,0,0,0.85), transparent 75%)` }} />
+    <AbsoluteFill style={{ alignItems: "center", paddingTop: 120 }}>
+      <Caption eyebrow={eyebrow} title={title} highlight={highlight} align="center" size={70} />
+      <div style={{ width: design, transform: `scale(${scale})`, transformOrigin: "50% 0", marginTop: 70 }}>
+        <TiltIn at={panelAt} from={tilt} yaw={0}>
+          {children}
+        </TiltIn>
+      </div>
     </AbsoluteFill>
-  );
-}
-
-/**
- * A ~1s text beat: one line that builds word by word and re-centres as it grows,
- * over a slowly rising arc of light. The camera creeps in the whole time.
- */
-export function TitleBeat({ id, duration, words, highlight = [], enter = "blur", exit = "blur", arc = "low", size = 118 }: { id: string; duration: number; words: string[]; highlight?: string[]; enter?: Move; exit?: Move; arc?: "low" | "high"; size?: number }) {
-  // Words land on a steady pulse across the first ~60% of the beat.
-  const span = Math.min(0.55, duration * 0.55);
-  const beats = words.map((_, i) => 0.06 + (words.length > 1 ? (i * span) / (words.length - 1) : 0));
-  const keys: Key[] = [{ t: 0, z: 1 }, { t: duration + 0.5, z: 1.06 }];
-  return (
-    <Shot id={id} duration={duration} enter={enter} exit={exit} keys={keys}>
-      <Arc from={arc === "low" ? 980 : -1150} to={arc === "low" ? 760 : -930} />
-      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
-        <BuildLine words={words} beats={beats} size={size} highlight={highlight} color={C.text} />
-      </AbsoluteFill>
-    </Shot>
   );
 }

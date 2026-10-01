@@ -5,20 +5,20 @@ import { C, GRADIENT_TEXT } from "../theme";
 
 /** Niches that cycle through one slot of the tagline, on the beat (Pump.fun's "Trade [Solana / BNB / anything]"). */
 const NICHES = ["minecraft", "cooking", "finance", "any niche."];
-const NICHE_BEATS = [0.75, 1.0, 1.25, 1.5];
+const NICHE_BEATS = [1.3, 1.9, 2.5, 3.1];
 
 export function Reveal({ dur }: { dur: number }) {
   const t = useTime();
-  const logo = prog(t, 0, 0.8, BACK);
-  const logoBlur = prog(t, 0, 0.5, OUT);
-  const glow = prog(t, 0, 0.9);
-  const word = prog(t, 0.2, 0.8, IN_OUT);
-  const line = prog(t, 0.55, 0.5, OUT);
+  const logo = prog(t, 0, 1.2, BACK);
+  const logoBlur = prog(t, 0, 0.8, OUT);
+  const glow = prog(t, 0, 1.4);
+  const word = prog(t, 0.35, 1.2, IN_OUT);
+  const line = prog(t, 1.0, 0.9, OUT);
   return (
-    <Shot id="reveal" duration={dur} enter="push" exit="blur" keys={[{ t: 0, z: 1 }, { t: dur + 0.5, z: 1.08 }]}>
+    <Shot id="reveal" duration={dur} enter="push" exit="blur" keys={[{ t: 0, x: 900, y: 560, z: 0.9, r: -1 }, { t: 2.0, x: 960, y: 540, z: 1.02, r: 0 }, { t: dur + 0.9, x: 1030, y: 530, z: 1.18, r: 1 }]}>
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
-        {[0, 0.14].map((d) => {
-          const p = prog(t, d, 1.1);
+        {[0, 0.25].map((d) => {
+          const p = prog(t, d, 1.8);
           return <div key={d} style={{ position: "absolute", width: 300, height: 300, borderRadius: 999, border: `2px solid rgba(196,181,253,${0.5 * (1 - p)})`, transform: `scale(${0.5 + p * 4.5})`, top: 250, filter: "blur(1px)" }} />;
         })}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -40 }}>

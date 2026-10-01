@@ -54,3 +54,31 @@ The videos themselves are third-party and are **not** committed (`refs/src/` is 
 - `src/scenes/Layouts.tsx` — `TitleBeat` (1s text beat over a rising light arc) and `Stage` (full-frame product).
 - `src/timeline.ts` — every feature is title beat + product beat; all cuts on 0.5s beats; music drops unchanged (6s, 24s, 26s).
 - `src/components/Backdrop.tsx` — light pools ease to a new position on each shot; `Bloom` on the drops.
+
+## v4: the client's example (samgrows, a designer-made film and its remake)
+
+Feedback on v3: too fast in places, animations felt rough, and the frame froze between moves.
+The example is a side-by-side of a designer's film and a remake; measured on the designer's half
+(`refs/continuity.py`, optical flow on the moving region):
+
+| | Example | v3 |
+|---|---|---|
+| Frames where the image is essentially still | **7%** | 30% |
+| Typical speed of the moving region | **1.25** | 0.28 |
+| Hard cuts in ~30s | 3 | ~25 beats |
+
+So the example moves *more* of the time, but each idea gets 2–5s. Its camera dollies
+continuously across UI, with a caption beside it ("Now choose a reference outlier").
+
+What changed in v4:
+- **Camera never parks.** Keys are joined by a Catmull-Rom (cubic Hermite) spline, so the
+  camera passes *through* keys instead of easing to a stop on each; past the last key it
+  keeps drifting on the end tangent. Every shot also has a slow perpetual push (0.6%/s)
+  and a faint float.
+- **Fewer, longer shots.** Each feature is one ~5s continuous shot: open close on the caption
+  as it writes on, dolly across to the product as it settles out of 3D, keep pushing gently.
+  Total length 46s; one hard cut (into the breakdown).
+- **Smoother animation.** Entrances ~1.5× longer (0.9s words with 0.11s stagger, 1.7s panel
+  tilt), softer blur, 0.9s dissolves. The per-frame directional motion-blur filter was removed:
+  it switched on and off with speed and read as stutter.
+- Captions and cards keep a slow drift or float after they land.

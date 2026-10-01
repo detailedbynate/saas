@@ -13,15 +13,10 @@ const MOODS: Record<keyof typeof SHOTS, [Glow, Glow]> = {
   hook: [{ x: 50, y: 40, s: 55, a: 0.26 }, { x: 80, y: 85, s: 40, a: 0.12 }],
   problem: [{ x: 30, y: 30, s: 45, a: 0.16 }, { x: 75, y: 80, s: 40, a: 0.1 }],
   reveal: [{ x: 50, y: 45, s: 70, a: 0.4 }, { x: 50, y: 100, s: 60, a: 0.22 }],
-  researchTitle: [{ x: 50, y: 95, s: 60, a: 0.3 }, { x: 15, y: 20, s: 35, a: 0.1 }],
-  research: [{ x: 30, y: 35, s: 55, a: 0.24 }, { x: 85, y: 85, s: 45, a: 0.14 }],
-  growthTitle: [{ x: 50, y: 0, s: 60, a: 0.3 }, { x: 85, y: 90, s: 35, a: 0.1 }],
-  growth: [{ x: 70, y: 35, s: 55, a: 0.26 }, { x: 15, y: 85, s: 45, a: 0.14 }],
-  picksTitle: [{ x: 50, y: 95, s: 60, a: 0.3 }, { x: 85, y: 15, s: 35, a: 0.1 }],
-  picks: [{ x: 50, y: 30, s: 75, a: 0.24 }, { x: 50, y: 100, s: 60, a: 0.16 }],
-  analyzeTitle: [{ x: 50, y: 0, s: 60, a: 0.3 }, { x: 15, y: 90, s: 35, a: 0.1 }],
-  analyze: [{ x: 35, y: 55, s: 55, a: 0.26 }, { x: 85, y: 20, s: 40, a: 0.14 }],
-  scriptTitle: [{ x: 50, y: 95, s: 60, a: 0.3 }, { x: 85, y: 15, s: 35, a: 0.1 }],
+  research: [{ x: 25, y: 40, s: 55, a: 0.26 }, { x: 85, y: 85, s: 45, a: 0.14 }],
+  growth: [{ x: 75, y: 35, s: 55, a: 0.26 }, { x: 15, y: 85, s: 45, a: 0.14 }],
+  picks: [{ x: 50, y: 25, s: 75, a: 0.24 }, { x: 50, y: 100, s: 60, a: 0.16 }],
+  analyze: [{ x: 35, y: 60, s: 55, a: 0.26 }, { x: 85, y: 20, s: 40, a: 0.14 }],
   script: [{ x: 65, y: 40, s: 55, a: 0.24 }, { x: 20, y: 80, s: 45, a: 0.12 }],
   why: [{ x: 50, y: 50, s: 45, a: 0.18 }, { x: 50, y: 50, s: 80, a: 0.08 }],
   cta: [{ x: 50, y: 42, s: 70, a: 0.34 }, { x: 50, y: 105, s: 70, a: 0.24 }],
@@ -45,7 +40,7 @@ export function Backdrop() {
   const cur = MOODS[ORDER[i]];
   const next = MOODS[ORDER[Math.min(i + 1, ORDER.length - 1)]];
   const s = SHOTS[ORDER[i]];
-  const p = interpolate(t, [s.at + s.dur - 0.2, s.at + s.dur + 0.5], [0, 1], { ...clamp, easing: DRIFT });
+  const p = interpolate(t, [s.at + s.dur - 0.6, s.at + s.dur + 1.2], [0, 1], { ...clamp, easing: DRIFT });
   const g1 = mix(cur[0], next[0], i === ORDER.length - 1 ? 0 : p);
   const g2 = mix(cur[1], next[1], i === ORDER.length - 1 ? 0 : p);
   // A slow breathing wobble keeps the light alive between moves.
@@ -77,8 +72,8 @@ export function Bloom({ at, strength = 1 }: { at: number; strength?: number }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = frame / fps;
-  const up = interpolate(t, [at - 0.3, at], [0, 1], { ...clamp, easing: DRIFT });
-  const down = interpolate(t, [at, at + 0.7], [1, 0], { ...clamp, easing: DRIFT });
+  const up = interpolate(t, [at - 0.5, at], [0, 1], { ...clamp, easing: DRIFT });
+  const down = interpolate(t, [at, at + 1.4], [1, 0], { ...clamp, easing: DRIFT });
   const k = Math.min(up, down) * strength;
   if (k <= 0.001) return null;
   return (
