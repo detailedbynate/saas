@@ -16,7 +16,7 @@ SR = 44100
 BPM = 120
 BEAT = 60 / BPM
 BAR = BEAT * 4
-LENGTH = 47.0  # seconds; the video is 46s, plus a little tail
+LENGTH = 26.0  # seconds; the video is 25s, plus a little tail
 
 OUT = Path(__file__).resolve().parent.parent / "public" / "audio"
 rng = np.random.default_rng(7)
@@ -298,10 +298,10 @@ def cash():
 # ---------------------------------------------------------------- arrangement
 
 # Section boundaries in seconds; these match SHOTS in src/timeline.ts.
-DROP = 8.0         # logo reveal
-BREAK = 36.0       # "why" montage: drums drop out
-FINAL = 40.0       # pricing / CTA
-END = 45.5         # last chord
+DROP = 3.5         # first feature, right after the scan
+BREAK = 23.5       # end card (no breakdown in this cut)
+FINAL = 23.5       # end card
+END = 24.5         # last chord
 
 
 def build_music():

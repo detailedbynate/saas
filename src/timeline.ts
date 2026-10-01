@@ -1,27 +1,23 @@
 /**
- * Shot timing in seconds. Each shot starts where the previous one's transition begins,
- * so neighbours overlap by TRANSITION (0.9s).
- *
- * v4 pacing follows the example the client liked: few, long shots (4–5s each) where
- * the camera never stops moving, a caption beside the product rather than a separate
- * title card, and only one hard cut (into the breakdown). The music
- * (scripts/make_audio.py) is 120 BPM, one bar = 2s; the drops land on the logo
- * reveal (8s) and pricing (40s), the breakdown starts at 36s.
+ * Shot timing in seconds. 25s, structured 1:1 on the Algrow launch film
+ * (refs/src/algrow.mp4, see refs/NOTES.md "v5"): a typed prompt, a "scanning"
+ * beat, six feature beats of ~3s, and a short end card. Neighbouring shots
+ * overlap by TRANSITION (0.5s). Music (scripts/make_audio.py) is 120 BPM and
+ * every boundary sits on a half-beat; the drop lands on the first feature (3.5s).
  */
 export const FPS = 60;
 
 export const SHOTS = {
-  hook: { at: 0, dur: 5 },
-  problem: { at: 5, dur: 3 },
-  reveal: { at: 8, dur: 4 }, // drop
-  research: { at: 12, dur: 5 },
-  growth: { at: 17, dur: 4.5 },
-  picks: { at: 21.5, dur: 4.5 },
-  analyze: { at: 26, dur: 5 },
-  script: { at: 31, dur: 5 },
-  why: { at: 36, dur: 4 }, // breakdown
-  cta: { at: 40, dur: 6 }, // final drop; the URL end card lands at 43
+  prompt: { at: 0, dur: 2.5 }, // ≈ Algrow 0–2.65  prompt bar
+  scan: { at: 2.5, dur: 1 }, // ≈ 2.65–3.55       "Scanning and analyzing content"
+  finder: { at: 3.5, dur: 3 }, // ≈ 3.55–6.7      Niche Finding: collage + views counter
+  picks: { at: 6.5, dur: 3 }, // ≈ 6.7–10         AI Video Generator: title, card, collage
+  score: { at: 9.5, dur: 4 }, // ≈ 10–16          AI Voice Generator: glowing card, type, generate, collapse
+  tracker: { at: 13.5, dur: 3.5 }, // ≈ 16–22.2   AI Video Automation: URL + box, analyse, fan of cards
+  script: { at: 17, dur: 3.5 }, // ≈ 22.2–28.7    AI Image Generation: prompt, reference, generate, results
+  compare: { at: 20.5, dur: 3 }, // ≈ 28.7–34.8   Caption Remover: before/after wipe
+  end: { at: 23.5, dur: 1.5 }, // end card (Algrow's film has none; ours needs the URL)
 } as const;
 
-export const TOTAL_SECONDS = SHOTS.cta.at + SHOTS.cta.dur;
+export const TOTAL_SECONDS = SHOTS.end.at + SHOTS.end.dur;
 export const TOTAL_FRAMES = TOTAL_SECONDS * FPS;

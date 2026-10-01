@@ -85,3 +85,24 @@ What changed in v4:
 
 Result (`refs/continuity.py`): still frames dropped from 30% (v3) to **11%** (example: 7%),
 and the longest still stretch from 1.3s to 0.75s.
+
+## v5: 25s, 1:1 on the Algrow launch film
+
+Reference: `refs/src/algrow.mp4` (34.8s, 1080p60, silent). Structure, layouts and camera
+mapped scene for scene; Outlier's features, copy, logo and violet replace Algrow's.
+No Algrow footage, text or branding is used.
+
+| Algrow | t | Outlier v5 | t |
+|---|---|---|---|
+| Glowing prompt bar, typed question, 3D arrow presses send | 0–2.65 | same, "find breakout Shorts channels in minecraft" | 0–2.5 |
+| "Scanning and analyzing content" over fluid blobs | 2.65–3.55 | "Scanning millions of Shorts" | 2.5–3.5 |
+| Niche Finding: thumbnail collage left, eye + view counter right | 3.55–6.7 | Outlier Finder, +38M | 3.5–6.5 |
+| AI Video Generator: title, request card, collage pops out | 6.7–10 | Daily Picks | 6.5–9.5 |
+| AI Voice Generator: glowing card, type, click, spinner, collapses to player | 10–16 | Video Analyzer, collapses to the 79× score bar | 9.5–13.5 |
+| AI Video Automation: 3D-tilted URL + script boxes, Analyse, spinner, 3 cards fan out | 16–22.2 | Channel Tracker | 13.5–17 |
+| AI Image Generation: prompt, drag a reference in, send, spinner, 3 results | 22.2–28.7 | Script Writer | 17–20.5 |
+| Caption Remover: title left, vertical before/after wipe | 28.7–34.8 | Outlier Score: views (before) vs 79× (after) | 20.5–23.5 |
+| — (no end card) | | Logo + useoutlier.online | 23.5–25 |
+
+Motion measured on the reference (`motion.py`, `continuity.py`): 9.8% still frames, longest
+still 0.67s, camera mostly constant-speed drift with ease-out entrances.
