@@ -31,14 +31,14 @@ export function Hook({ dur }: { dur: number }) {
             position: "absolute",
             left: "50%",
             top: "50%",
-            width: 1500,
-            height: 620,
-            marginLeft: -750,
-            marginTop: -310,
+            width: 2000,
+            height: 860,
+            marginLeft: -1000,
+            marginTop: -430,
             borderRadius: "50%",
             transform: `rotate(${(i ? -1 : 1) * (18 + t * 9)}deg) scale(${swell * (i ? 0.8 : 1)})`,
-            background: i ? `radial-gradient(ellipse at 35% 50%, rgba(236,72,153,0.55), rgba(${VIOLET},0.35) 45%, transparent 70%)` : `radial-gradient(ellipse at 60% 50%, rgba(${LILAC},0.7), rgba(${VIOLET},0.55) 40%, transparent 70%)`,
-            filter: "blur(70px)",
+            // Wide radial falloffs give the soft look without a live blur filter.
+            background: i ? `radial-gradient(ellipse 46% 46% at 44% 50%, rgba(236,72,153,0.42), rgba(${VIOLET},0.22) 40%, rgba(${VIOLET},0.07) 72%, transparent 100%)` : `radial-gradient(ellipse 46% 46% at 54% 50%, rgba(${LILAC},0.5), rgba(${VIOLET},0.36) 36%, rgba(${VIOLET},0.1) 70%, transparent 100%)`,
             opacity: prog(t, 0, 0.8) * 0.9,
           }}
         />
@@ -114,13 +114,13 @@ export function Wall({ dur }: { dur: number }) {
                 position: "absolute",
                 left: x,
                 top: y,
-                opacity: fade * (hit ? 1 : 1 - 0.72 * dim),
-                filter: !hit && dim > 0.02 ? `blur(${dim * 3}px) saturate(${1 - 0.6 * dim})` : undefined,
+                // Dimming is opacity only: a blur filter on 50 cards is very slow to render.
+                opacity: fade * (hit ? 1 : 1 - 0.8 * dim),
                 transform: `scale(${1 + 0.16 * pop})`,
                 zIndex: hit ? 3 : 1,
               }}
             >
-              <ShortCard clip={centre ? "short-b" : clip} w={CW} h={CH} live={live} from={(i % 4) * 0.6} glow={hit ? 0.25 + 0.75 * pop : centre ? 0.3 : 0.12} />
+              <ShortCard clip={centre ? "short-b" : clip} w={CW} h={CH} live={live} from={(i % 4) * 0.6} flat={!hit} glow={hit ? 0.25 + 0.75 * pop : 0.12} />
               {hit ? (
                 <div
                   style={{

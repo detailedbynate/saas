@@ -69,7 +69,7 @@ export function Kinetic({ text, at = 0, out, size = 120, weight = 800, color = C
 /* ------------------------------------------------------------------ Footage */
 
 /** A Short: live video or a poster frame, in a rounded card with a glow edge. */
-export function ShortCard({ clip, w, h, live = false, from = 0, badge, glow = 0.5, style, rate = 1 }: { clip: string; w: number; h: number; live?: boolean; from?: number; badge?: string; glow?: number; style?: CSSProperties; rate?: number }) {
+export function ShortCard({ clip, w, h, live = false, from = 0, badge, glow = 0.5, style, rate = 1, flat = false }: { clip: string; w: number; h: number; live?: boolean; from?: number; badge?: string; glow?: number; style?: CSSProperties; rate?: number; flat?: boolean }) {
   const { fps } = useVideoConfig();
   return (
     <div
@@ -80,7 +80,7 @@ export function ShortCard({ clip, w, h, live = false, from = 0, badge, glow = 0.
         borderRadius: Math.min(w, h) * 0.085,
         overflow: "hidden",
         border: `2px solid rgba(${LILAC},${0.25 + 0.6 * glow})`,
-        boxShadow: `0 0 ${26 * glow}px rgba(${VIOLET},${0.75 * glow}), 0 0 ${90 * glow}px rgba(${VIOLET},${0.35 * glow}), 0 30px 80px rgba(0,0,0,0.6)`,
+        boxShadow: flat ? undefined : `0 0 ${26 * glow}px rgba(${VIOLET},${0.75 * glow}), 0 0 ${90 * glow}px rgba(${VIOLET},${0.35 * glow}), 0 30px 80px rgba(0,0,0,0.6)`,
         background: "#0b0a12",
         flexShrink: 0,
         ...style,
@@ -91,7 +91,7 @@ export function ShortCard({ clip, w, h, live = false, from = 0, badge, glow = 0.
       ) : (
         <Img src={staticFile(`footage/${clip}.jpg`)} style={{ width: w, height: h, objectFit: "cover" }} />
       )}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.55))" }} />
+      {flat ? null : <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.55))" }} />}
       {badge ? (
         <div style={{ position: "absolute", right: w * 0.05, top: w * 0.05, padding: `${w * 0.02}px ${w * 0.05}px`, borderRadius: 999, background: C.accent, color: "#fff", fontFamily: FONT.display, fontWeight: 800, fontSize: w * 0.085, boxShadow: `0 6px 24px rgba(${VIOLET},0.7)` }}>{badge}</div>
       ) : null}
@@ -220,9 +220,11 @@ export function Dust({ count = 46, seed = "dust", tint = LILAC, speed = 1 }: { c
         const v = (0.4 + z * 1.6) * speed;
         const x = (((x0 + t * 26 * v + Math.sin(t * 0.6 + i) * 20) % 2000) + 2000) % 2000 - 40;
         const y = (((y0 - t * 14 * v) % 1160) + 1160) % 1160 - 40;
-        const size = 2 + z * z * 9;
+        // Near motes are bigger and softer (a wide radial falloff stands in for depth-of-field blur).
+        const size = (2 + z * z * 9) * (z > 0.75 ? 3.2 : 2.2);
         const tw = 0.5 + 0.5 * Math.sin(t * (1 + z * 2) + i * 2.3);
-        return <div key={i} style={{ position: "absolute", left: x, top: y, width: size, height: size, borderRadius: 99, background: `rgba(${tint},${(0.15 + 0.5 * tw) * (0.4 + 0.6 * z)})`, filter: `blur(${z > 0.75 ? (z - 0.75) * 22 : 0.4}px)`, boxShadow: `0 0 ${size * 2}px rgba(${tint},0.5)` }} />;
+        const a = (0.2 + 0.6 * tw) * (0.4 + 0.6 * z) * (z > 0.75 ? 0.55 : 1);
+        return <div key={i} style={{ position: "absolute", left: x, top: y, width: size, height: size, borderRadius: 99, background: `radial-gradient(circle, rgba(${tint},${a}) 0%, rgba(${tint},${a * 0.35}) ${z > 0.75 ? 35 : 45}%, transparent 70%)` }} />;
       })}
     </AbsoluteFill>
   );

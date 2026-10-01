@@ -1,5 +1,5 @@
 import { HtmlInCanvasMotionBlur } from "@remotion/motion-blur";
-import { AbsoluteFill, Audio, Sequence, continueRender, delayRender, interpolate, staticFile, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, Sequence, continueRender, delayRender, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { useEffect, useState } from "react";
 import { Backdrop } from "./components/Backdrop";
 import { Finish, Leak } from "./components/fx";
@@ -84,6 +84,25 @@ function shot(s: { at: number; dur: number }) {
   return { from: f(s.at - LEAD), durationInFrames: f(s.dur + TRANSITION) };
 }
 
+/**
+ * Where the picture moves fast enough to need motion blur: every shot boundary
+ * (the whips and zoom-throughs) and every speed ramp. Elsewhere the camera only
+ * drifts, blur would be invisible, and skipping it makes the final render several times faster.
+ */
+const FAST: [number, number][] = [
+  ...Object.values(S).slice(1).map((s): [number, number] => [s.at - 0.3, s.at + 0.3]),
+  [S.wall.at + 0.95, S.wall.at + 1.95],
+  [S.finder.at + 2.3, S.finder.at + 3.05],
+  [S.finder.at + 3.2, S.finder.at + 3.95],
+  [S.finder.at + 4.55, S.finder.at + 5.3],
+  [S.score.at + 0.4, S.score.at + 1.2],
+  [S.score.at + 1.85, S.score.at + 2.6],
+  [S.score.at + 3.05, S.score.at + 3.65],
+  [S.dash.at + 0.25, S.dash.at + 1.3],
+  [S.dash.at + 2.25, S.dash.at + 3.05],
+];
+const isFast = (frame: number) => FAST.some(([a, b]) => frame >= a * FPS && frame <= b * FPS);
+
 function Film() {
   return (
     <AbsoluteFill style={{ background: "#000" }}>
@@ -102,7 +121,7 @@ function Film() {
 }
 
 export type LaunchProps = {
-  /** Sub-frame samples for true motion blur. 0 = off (fast drafts). 8 is a good final value. */
+  /** Sub-frame samples for true motion blur on the fast moves. 0 = off (fast drafts). 8 is a good final value. */
   motionBlur: number;
   /** WebGL light leaks over the big transitions. Needs a GPU-backed GL (`--gl=angle`). */
   lightLeaks: boolean;
@@ -110,6 +129,8 @@ export type LaunchProps = {
 
 export function OutlierLaunch({ motionBlur, lightLeaks }: LaunchProps) {
   const { width, height } = useVideoConfig();
+  const frame = useCurrentFrame();
+  const blurNow = motionBlur > 0 && isFast(frame);
   const [handle] = useState(() => delayRender("fonts"));
   useEffect(() => {
     fontsReady.then(() => continueRender(handle));
@@ -117,9 +138,8 @@ export function OutlierLaunch({ motionBlur, lightLeaks }: LaunchProps) {
 
   return (
     <AbsoluteFill style={{ background: "#000" }}>
-      {/* The grade: a touch more contrast and saturation over everything */}
-      <AbsoluteFill style={{ filter: "contrast(1.06) saturate(1.12)" }}>
-        {motionBlur > 0 ? (
+      <AbsoluteFill>
+        {blurNow ? (
           <HtmlInCanvasMotionBlur width={width} height={height} samples={motionBlur} shutterAngle={180}>
             <Film />
           </HtmlInCanvasMotionBlur>

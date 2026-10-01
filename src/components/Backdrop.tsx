@@ -34,12 +34,12 @@ export function Backdrop() {
             width: `${s.w}%`,
             height: "170%",
             transform: `rotate(${s.rot + Math.sin(t * 0.12 + i) * 1.5}deg)`,
-            background: `linear-gradient(90deg, transparent 0%, rgba(139,92,246,${s.a * 0.3}) 38%, rgba(167,139,250,${s.a}) 50%, rgba(139,92,246,${s.a * 0.2}) 60%, transparent 100%)`,
-            filter: "blur(36px)",
+            // A soft gradient on its own; no live blur filter (those are the slowest thing to render).
+            background: `linear-gradient(90deg, transparent 0%, rgba(139,92,246,${s.a * 0.12}) 22%, rgba(139,92,246,${s.a * 0.45}) 40%, rgba(167,139,250,${s.a}) 50%, rgba(139,92,246,${s.a * 0.35}) 58%, rgba(139,92,246,${s.a * 0.08}) 78%, transparent 100%)`,
           }}
         />
       ))}
-      <Dust count={40} seed="bg" />
+      <Dust count={32} seed="bg" />
     </AbsoluteFill>
   );
 }
