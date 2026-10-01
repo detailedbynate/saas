@@ -141,3 +141,21 @@ Techniques:
 7. True motion blur via `<HtmlInCanvasMotionBlur>` (final render, 8 samples).
 8. Sound: every move has a whoosh into it and a hit on it; new sub-hit, shimmer and riser
    layers; music re-timed (drop 8s, breakdown 26.5s, final hit 29.5s).
+
+### v6.1: why the first draft looked rough, and the fix
+
+Measured on the client's draft with `refs/smooth.py` (sub-pixel frame-to-frame shift):
+footage moved a steady 2.1px per frame, but every piece of text moved ~0.4px per frame and
+then jumped a full pixel every fourth frame. Causes and fixes:
+
+- **Text stutter on pans and zooms.** Letters and callouts used `translate3d`, which made each
+  one its own compositing layer that Chrome re-rasterised in steps as the camera scaled.
+  Now: only 2D transforms inside shots, and non-tilted shots are drawn with a 2D transform
+  plus a 0.03° rotation (no layer, no pixel snapping). Result: text moves by sub-pixels every
+  frame with no jumps. Rule: no `translate3d` or `will-change` inside a `<Shot>`.
+- **Bouncing callouts.** Springs overshot left-right as they landed. Now a single ease-out glide.
+- **Busy letters.** Per-letter rotation and animated letter-spacing (which re-flowed the line
+  every frame) removed; letters only rise out of the mask.
+- **Abrupt camera.** Speed ramps softened (quint → gentler curve) and lengthened to ~0.85s;
+  transitions lengthened to 0.6s; the dashboard tilt settles fully flat.
+- Counters use tabular digits so centred numbers don't shimmy.

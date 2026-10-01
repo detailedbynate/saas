@@ -8,37 +8,37 @@ import { clamp, prog, useTime } from "./ui";
 
 /* ------------------------------------------------------------------ Springs */
 
-/** A spring that starts at `at` seconds. Default: a quick settle with a touch of overshoot. */
+/** A spring that starts at `at` seconds. Default: a quick settle with barely any overshoot. */
 export function sp(t: number, at: number, cfg: { damping?: number; stiffness?: number; mass?: number } = {}) {
-  return spring({ frame: Math.max(0, (t - at) * 60), fps: 60, config: { damping: 14, stiffness: 120, mass: 0.9, ...cfg } });
+  return spring({ frame: Math.max(0, (t - at) * 60), fps: 60, config: { damping: 19, stiffness: 120, mass: 0.9, ...cfg } });
 }
 /** A firm spring with no overshoot (camera-like pushes). */
 export const firm = { damping: 200, stiffness: 140, mass: 1 };
 /** A lively spring with visible overshoot (pops, badges). */
-export const bouncy = { damping: 9, stiffness: 150, mass: 0.7 };
+export const bouncy = { damping: 13, stiffness: 150, mass: 0.7 };
 
 /* ------------------------------------------------------------------ Kinetic type */
 
 /**
- * Per-letter reveal: each letter rises out of a mask on its own spring, the tracking
- * tightens as the line lands, and an optional sheen sweeps across afterwards.
+ * Per-letter reveal: each letter rises out of a mask and settles without overshoot,
+ * one after another. Letters only translate (no rotation, no changing letter-spacing),
+ * so nothing re-flows while the line lands.
  * `out` (seconds) makes the letters drop away again, last letter first.
  */
 export function Kinetic({ text, at = 0, out, size = 120, weight = 800, color = C.text, accent = [], stagger = 0.028, style, glow = 0 }: { text: string; at?: number; out?: number; size?: number; weight?: number; color?: string; accent?: string[]; stagger?: number; style?: CSSProperties; glow?: number }) {
   const t = useTime();
   const words = text.split(" ");
   const total = text.replace(/ /g, "").length;
-  const settle = sp(t, at, firm);
   let n = 0;
   return (
-    <div style={{ fontFamily: FONT.display, fontWeight: weight, fontSize: size, lineHeight: 1.08, letterSpacing: `${-0.035 + 0.05 * (1 - settle)}em`, color, textAlign: "center", ...style }}>
+    <div style={{ fontFamily: FONT.display, fontWeight: weight, fontSize: size, lineHeight: 1.08, letterSpacing: "-0.035em", color, textAlign: "center", ...style }}>
       {words.map((w, wi) => {
         const lit = accent.includes(w.replace(/[.,?!×]/g, ""));
         return (
           <span key={wi} style={{ display: "inline-block", whiteSpace: "pre", overflow: "hidden", verticalAlign: "top", padding: "0.06em 0.02em 0.14em", margin: "-0.06em -0.02em -0.14em" }}>
             {w.split("").map((ch) => {
               const i = n++;
-              const a = sp(t, at + i * stagger, { damping: 16, stiffness: 150, mass: 0.8 });
+              const a = prog(t, at + i * stagger, 0.75, Easing.bezier(0.16, 1, 0.3, 1));
               const o = out === undefined ? 0 : prog(t, out + (total - 1 - i) * 0.012, 0.28, Easing.in(Easing.cubic));
               const y = (1 - a) * 115 - o * 120;
               return (
@@ -46,10 +46,9 @@ export function Kinetic({ text, at = 0, out, size = 120, weight = 800, color = C
                   key={i}
                   style={{
                     display: "inline-block",
-                    transform: `translate3d(0, ${y}%, 0) rotate(${(1 - a) * 8}deg)`,
-                    transformOrigin: "0% 100%",
-                    opacity: Math.min(1, a * 2) * (1 - o),
-                    filter: a < 0.9 ? `blur(${(1 - a) * 6}px)` : undefined,
+                    transform: a < 0.9995 || o > 0 ? `translate(0, ${y}%)` : undefined,
+                    opacity: Math.min(1, a * 1.6) * (1 - o),
+                    filter: a < 0.97 ? `blur(${(1 - a) * 8}px)` : undefined,
                     textShadow: glow ? `0 0 ${40 * glow}px rgba(${VIOLET},${0.8 * glow})` : undefined,
                     ...(lit ? { background: "linear-gradient(100deg, #ffffff 0%, #c4b5fd 40%, #8b5cf6 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" } : null),
                   }}
@@ -151,7 +150,7 @@ export function AppClip({ from, rate = 1, style }: { from: number; rate?: number
 /** A soft highlight box drawn over the app (app pixels), pulsing once as it lands. */
 export function Spot({ x, y, w, h, at, r = 18 }: { x: number; y: number; w: number; h: number; at: number; r?: number }) {
   const t = useTime();
-  const p = sp(t, at, firm);
+  const p = prog(t, at, 0.6, Easing.bezier(0.16, 1, 0.3, 1));
   const pulse = prog(t, at, 0.9);
   return (
     <div
@@ -173,8 +172,8 @@ export function Spot({ x, y, w, h, at, r = 18 }: { x: number; y: number; w: numb
 /** A caption chip that springs in beside whatever the camera is looking at (stage pixels). */
 export function Callout({ x, y, at, out, children, side = "left" }: { x: number; y: number; at: number; out?: number; children: ReactNode; side?: "left" | "right" }) {
   const t = useTime();
-  const p = sp(t, at, { damping: 13, stiffness: 140 });
-  const o = out === undefined ? 0 : prog(t, out, 0.3, Easing.in(Easing.cubic));
+  const p = prog(t, at, 0.7, Easing.bezier(0.16, 1, 0.3, 1));
+  const o = out === undefined ? 0 : prog(t, out, 0.35, Easing.bezier(0.65, 0, 0.35, 1));
   const dir = side === "left" ? -1 : 1;
   return (
     <div
@@ -182,10 +181,10 @@ export function Callout({ x, y, at, out, children, side = "left" }: { x: number;
         position: "absolute",
         left: x,
         top: y,
-        transform: `translate3d(${dir * (1 - p) * 60 + (side === "left" ? -100 : 0)}%, -50%, 0) translate3d(${dir * (1 - p) * 40}px, ${-o * 30}px, 0) scale(${0.8 + 0.2 * p})`,
+        transform: `translate(${side === "left" ? -100 : 0}%, -50%) translate(${dir * (1 - p) * 70}px, ${-o * 24}px) scale(${0.94 + 0.06 * p})`,
         transformOrigin: side === "left" ? "100% 50%" : "0% 50%",
-        opacity: Math.min(1, p * 1.6) * (1 - o),
-        filter: p < 0.9 ? `blur(${(1 - p) * 8}px)` : undefined,
+        opacity: Math.min(1, p * 1.4) * (1 - o),
+        filter: p < 0.97 ? `blur(${(1 - p) * 10}px)` : undefined,
         padding: "16px 30px",
         borderRadius: 20,
         background: "linear-gradient(180deg, rgba(139,92,246,0.95), rgba(109,40,217,0.95))",

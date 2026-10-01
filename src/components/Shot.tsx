@@ -44,7 +44,7 @@ interface Pose {
   by: number; // directional blur, y
 }
 
-const RAMP = Easing.bezier(0.83, 0, 0.17, 1); // easeInOutQuint: the speed ramp
+const RAMP = Easing.bezier(0.7, 0, 0.3, 1); // the speed ramp: a firm ease in and out, without the snap of a quint curve
 
 /**
  * Camera keys → a smooth curve. Glide segments are a Catmull-Rom spline (the camera
@@ -170,11 +170,19 @@ export function Shot({ id, duration, children, keys = [], enter = "blur", exit =
   const t = frame / fps - TRANSITION / 2;
   const now = pose(t, duration, keys, enter, exit);
   if (now.o <= 0.001) return null;
+  /*
+   * Smoothness: when the shot is not tilted in 3D, it is drawn with a plain 2D transform
+   * (no separate compositing layer) plus a 0.03° rotation. Chrome snaps text to whole
+   * pixels inside layers and for axis-aligned transforms, which makes text stutter on slow
+   * pans and zooms; drawn this way it moves by sub-pixels every frame, like footage does.
+   * For the same reason, nothing inside a shot should use translate3d or will-change.
+   */
+  const flat = Math.abs(now.rx) < 0.001 && Math.abs(now.ry) < 0.001;
   const directional = now.bx > 0.5 || now.by > 0.5;
   const filters = [directional ? `url(#whip-${id})` : "", now.b > 0.05 ? `blur(${now.b.toFixed(2)}px)` : ""].filter(Boolean).join(" ");
 
   return (
-    <AbsoluteFill style={{ opacity: now.o, perspective: 2200 }}>
+    <AbsoluteFill style={{ opacity: now.o, perspective: flat ? undefined : 2200 }}>
       {directional ? (
         <svg width="0" height="0" style={{ position: "absolute" }}>
           <filter id={`whip-${id}`} x="-20%" y="-20%" width="140%" height="140%">
@@ -184,7 +192,7 @@ export function Shot({ id, duration, children, keys = [], enter = "blur", exit =
       ) : null}
       <AbsoluteFill
         style={{
-          transform: `translate3d(${now.x}px, ${now.y}px, 0) scale(${now.s}) rotateX(${now.rx}deg) rotateY(${now.ry}deg) rotate(${now.r}deg)`,
+          transform: flat ? `translate(${now.x}px, ${now.y}px) scale(${now.s}) rotate(${now.r + 0.03}deg)` : `translate3d(${now.x}px, ${now.y}px, 0) scale(${now.s}) rotateX(${now.rx}deg) rotateY(${now.ry}deg) rotate(${now.r}deg)`,
           transformOrigin: "50% 50%",
           filter: filters || undefined,
         }}

@@ -235,7 +235,7 @@ export function FeatureTitle({ accent, rest, at = 0, size = 76, icon, style }: {
                 marginRight: "0.24em",
                 opacity: Math.min(1, p * 1.4),
                 filter: p < 0.995 ? `blur(${(1 - p) * 10}px)` : undefined,
-                transform: `translate3d(${(1 - p) * 0.4}em, 0, 0)`,
+                transform: `translate(${(1 - p) * 0.4}em, 0)`,
                 ...(a ? { background: "linear-gradient(100deg, #c4b5fd, #8b5cf6)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" } : { color: C.text }),
               }}
             >
@@ -329,7 +329,7 @@ export function SoftType({ text, at, cps = 30, trail = 3, caret = false }: { tex
 export function ent(p: number, dx = 0, dy = 0, s0 = 1): CSSProperties {
   return {
     opacity: Math.min(1, p * 1.4),
-    transform: `translate3d(${(1 - p) * dx}px, ${(1 - p) * dy}px, 0) scale(${s0 + (1 - s0) * p})`,
+    transform: `translate(${(1 - p) * dx}px, ${(1 - p) * dy}px) scale(${s0 + (1 - s0) * p})`,
     filter: p < 0.995 ? `blur(${(1 - p) * 10}px)` : undefined,
   };
 }

@@ -22,7 +22,7 @@ export const DRIFT = Easing.bezier(0.37, 0, 0.63, 1);
 export const BACK = Easing.bezier(0.34, 1.32, 0.64, 1);
 
 /** Shots start this many seconds before their boundary, so transitions can straddle it. */
-export const LEAD = 0.25;
+export const LEAD = 0.3;
 
 /** Scene time in seconds, where 0 is the shot's boundary (the Sequence starts LEAD earlier). */
 export function useTime() {
@@ -45,7 +45,7 @@ function blurIn(p: number): CSSProperties {
   return {
     opacity: Math.min(1, p * 1.35),
     filter: p < 0.995 ? `blur(${(1 - p) * 10}px)` : undefined,
-    transform: `translate3d(0, ${(1 - p) * 0.32}em, 0) scale(${0.97 + 0.03 * p})`,
+    transform: `translate(0, ${(1 - p) * 0.32}em) scale(${0.97 + 0.03 * p})`,
   };
 }
 
@@ -225,7 +225,7 @@ export function Counter({ value, at, dur, decimals = 0, prefix = "", suffix = ""
   const p = useProg(at, dur, Easing.bezier(0.2, 0.9, 0.3, 1));
   const n = value * p;
   return (
-    <span>
+    <span style={{ fontVariantNumeric: "tabular-nums" }}>
       {prefix}
       {n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
       {suffix}

@@ -27,13 +27,13 @@ export function Finder({ dur }: { dur: number }) {
       exit="whipL"
       keys={[
         { t: 0, x: 815, y: 296, z: 2.3 },
-        { t: 2.35, x: 905, y: 282, z: 2.12 },
-        { t: 3.0, x: 960, y: 520, z: 1.03, ramp: true },
-        { t: 3.25, x: 962, y: 520, z: 1.04 },
-        { t: 3.9, x: 1061, y: 447, z: 1.62, ramp: true },
-        { t: 4.6, x: 1064, y: 452, z: 1.69 },
-        { t: 5.25, x: 950, y: 700, z: 1.5, ramp: true },
-        { t: 6.3, x: 990, y: 706, z: 1.57 },
+        { t: 2.3, x: 905, y: 282, z: 2.12 },
+        { t: 3.15, x: 960, y: 520, z: 1.03, ramp: true },
+        { t: 3.3, x: 962, y: 520, z: 1.035 },
+        { t: 4.15, x: 1061, y: 447, z: 1.55, ramp: true },
+        { t: 4.7, x: 1064, y: 452, z: 1.6 },
+        { t: 5.5, x: 950, y: 700, z: 1.45, ramp: true },
+        { t: 6.4, x: 985, y: 706, z: 1.5 },
       ]}
     >
       <AppWindow>
@@ -46,15 +46,15 @@ export function Finder({ dur }: { dur: number }) {
         {t >= 2.4 ? <AppStill name="app-22" /> : null}
         <AbsoluteFill style={{ background: `rgba(${LILAC},${0.5 * flash})` }} />
         {/* What the niche pays */}
-        {t > 3.5 && t < 4.75 ? <Spot x={455} y={260} w={1240} h={207} at={3.7} /> : null}
+        {t > 3.8 && t < 4.9 ? <Spot x={455} y={260} w={1240} h={207} at={3.95} /> : null}
         {/* Who's going viral */}
-        {t > 5.0 ? <Spot x={455} y={522} w={240} h={141} at={5.15} /> : null}
-        {t > 5.0 ? <Spot x={1205} y={522} w={240} h={141} at={5.35} /> : null}
+        {t > 5.2 ? <Spot x={455} y={522} w={240} h={141} at={5.35} /> : null}
+        {t > 5.2 ? <Spot x={1205} y={522} w={240} h={141} at={5.5} /> : null}
       </AppWindow>
-      <Callout x={app(455, 232)[0]} y={app(455, 232)[1]} at={3.85} out={4.65} side="right">
+      <Callout x={app(455, 232)[0]} y={app(455, 232)[1]} at={4.05} out={4.8} side="right">
         What the niche pays
       </Callout>
-      <Callout x={app(455, 476)[0]} y={app(455, 476)[1]} at={5.3} side="right">
+      <Callout x={app(455, 476)[0]} y={app(455, 476)[1]} at={5.45} side="right">
         Who's going viral in it
       </Callout>
       <Sparks x={app(1038, 144)[0]} y={app(1038, 144)[1]} at={2.38} seed="research" reach={160} count={12} />
@@ -66,7 +66,7 @@ export function Finder({ dur }: { dur: number }) {
 
 export function Score({ dur }: { dur: number }) {
   const t = useTime();
-  const toScroll = prog(t, 3.15, 0.35, Easing.bezier(0.65, 0, 0.35, 1));
+  const toScroll = prog(t, 3.3, 0.4, Easing.bezier(0.65, 0, 0.35, 1));
   const [rx, ry] = app(1620, 372);
   return (
     <Shot
@@ -76,32 +76,32 @@ export function Score({ dur }: { dur: number }) {
       exit="zoomIn"
       keys={[
         { t: 0, x: 960, y: 540, z: 1.04 },
-        { t: 0.45, x: 985, y: 532, z: 1.07 },
-        { t: 1.15, x: rx - 30, y: ry, z: 2.3, ramp: true },
-        { t: 1.9, x: rx - 40, y: ry + 6, z: 2.42 },
-        { t: 2.55, x: 1061, y: 548, z: 1.55, ramp: true },
-        { t: 3.1, x: 1061, y: 556, z: 1.6 },
-        { t: 3.6, x: 960, y: 540, z: 1.06, ramp: true },
-        { t: 4.3, x: 960, y: 560, z: 1.12 },
+        { t: 0.4, x: 985, y: 532, z: 1.07 },
+        { t: 1.3, x: rx - 30, y: ry, z: 2.1, ramp: true },
+        { t: 1.9, x: rx - 38, y: ry + 5, z: 2.18 },
+        { t: 2.75, x: 1061, y: 548, z: 1.5, ramp: true },
+        { t: 3.15, x: 1061, y: 554, z: 1.54 },
+        { t: 3.95, x: 960, y: 540, z: 1.07, ramp: true },
+        { t: 4.4, x: 960, y: 555, z: 1.1 },
       ]}
     >
       <AppWindow>
         <AppStill name="app-42" />
         {t > 3.0 ? (
-          <Sequence from={fr(3.15)} layout="none">
+          <Sequence from={fr(3.3)} layout="none">
             <AppClip from={50.2} rate={2.6} style={{ opacity: toScroll }} />
           </Sequence>
         ) : null}
-        {t > 0.9 && t < 2.5 ? <Spot x={1558} y={310} w={124} h={124} at={1.05} r={999} /> : null}
-        {t > 2.3 && t < 3.2 ? <Spot x={462} y={452} w={1220} h={56} at={2.5} r={14} /> : null}
+        {t > 1.0 && t < 2.6 ? <Spot x={1558} y={310} w={124} h={124} at={1.2} r={999} /> : null}
+        {t > 2.5 && t < 3.3 ? <Spot x={462} y={452} w={1220} h={56} at={2.7} r={14} /> : null}
       </AppWindow>
-      <Callout x={rx - 80} y={ry} at={1.25} out={2.2} side="left">
+      <Callout x={rx - 80} y={ry} at={1.35} out={2.15} side="left">
         Opportunity score
       </Callout>
-      <Callout x={app(475, 430)[0]} y={app(475, 430)[1]} at={2.6} out={3.15} side="right">
+      <Callout x={app(475, 430)[0]} y={app(475, 430)[1]} at={2.8} out={3.25} side="right">
         Demand · growth · competition
       </Callout>
-      <Sparks x={rx} y={ry} at={1.1} seed="ring" reach={130} count={14} />
+      <Sparks x={rx} y={ry} at={1.25} seed="ring" reach={130} count={14} />
     </Shot>
   );
 }
@@ -181,7 +181,7 @@ export function Stat({ dur }: { dur: number }) {
           <Counter value={405} at={0.05} dur={1.1} suffix="×" />
         </div>
         <div style={{ position: "relative", height: 90, width: 1500, marginTop: 6, zIndex: 3 }}>
-          <div style={{ position: "absolute", inset: 0, opacity: 1 - swap, transform: `translate3d(0, ${-swap * 30}px, 0)`, filter: swap > 0.02 ? `blur(${swap * 10}px)` : undefined }}>
+          <div style={{ position: "absolute", inset: 0, opacity: 1 - swap, transform: `translate(0, ${-swap * 30}px)`, filter: swap > 0.02 ? `blur(${swap * 10}px)` : undefined }}>
             <Kinetic text="one Short vs. its channel's average" at={0.35} size={62} weight={700} color={C.textSecondary} stagger={0.012} />
           </div>
           <div style={{ position: "absolute", inset: 0 }}>
@@ -213,10 +213,11 @@ export function Dash({ dur }: { dur: number }) {
       exit="blur"
       keys={[
         { t: 0, x: 960, y: 640, z: 0.9, rx: 36, ry: -8 },
-        { t: 1.25, x: 870, y: 600, z: 1.24, rx: 9, ry: -3, ramp: true },
-        { t: 2.3, x: 880, y: 612, z: 1.3, rx: 7, ry: -2 },
-        { t: 3.0, x: 1350, y: 590, z: 1.66, rx: 4, ry: 5, ramp: true },
-        { t: 4.3, x: 1360, y: 630, z: 1.75, rx: 3, ry: 6 },
+        // The tilt settles to exactly flat, so the rest of the shot takes the jitter-free 2D path.
+        { t: 1.35, x: 870, y: 600, z: 1.22, rx: 0, ry: 0, ramp: true },
+        { t: 2.3, x: 880, y: 612, z: 1.27, rx: 0, ry: 0 },
+        { t: 3.2, x: 1350, y: 590, z: 1.58, rx: 0, ry: 0, ramp: true },
+        { t: 4.4, x: 1360, y: 628, z: 1.66, rx: 0, ry: 0 },
       ]}
     >
       <AppWindow glow={0.8}>
@@ -233,14 +234,14 @@ export function Dash({ dur }: { dur: number }) {
           </div>
         );
       })}
-      <Callout x={app(474, 392)[0]} y={app(474, 392)[1] - 20} at={1.45} out={2.75} side="right">
+      <Callout x={app(474, 392)[0]} y={app(474, 392)[1] - 20} at={1.55} out={2.8} side="right">
         What's moving right now
       </Callout>
-      <Callout x={app(1215, 398)[0]} y={app(1215, 398)[1]} at={3.15} side="right">
+      <Callout x={app(1215, 398)[0]} y={app(1215, 398)[1]} at={3.35} side="right">
         Channels heating up
       </Callout>
-      {t > 2.9 ? (
-        <div style={{ position: "absolute", left: app(1205, 432)[0], top: app(1205, 432)[1], width: 495 * 0.8193, height: 290 * 0.8193, borderRadius: 16, border: `3px solid rgba(${LILAC},${sp(t, 3.1, firm)})`, boxShadow: `0 0 50px rgba(${VIOLET},${0.8 * sp(t, 3.1, firm)})` }} />
+      {t > 3.1 ? (
+        <div style={{ position: "absolute", left: app(1205, 432)[0], top: app(1205, 432)[1], width: 495 * 0.8193, height: 290 * 0.8193, borderRadius: 16, border: `3px solid rgba(${LILAC},${sp(t, 3.3, firm)})`, boxShadow: `0 0 50px rgba(${VIOLET},${0.8 * sp(t, 3.3, firm)})` }} />
       ) : null}
     </Shot>
   );

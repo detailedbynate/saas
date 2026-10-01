@@ -72,7 +72,7 @@ export function Cta({ dur }: { dur: number }) {
             </div>
             <Kinetic text="Outlier" at={0.08} size={184} stagger={0.04} style={{ textAlign: "left" }} />
           </div>
-          <div style={{ marginTop: 30, fontFamily: FONT.body, fontWeight: 500, fontSize: 44, color: C.textSecondary, opacity: sub, transform: `translate3d(0, ${(1 - sub) * 24}px, 0)`, filter: sub < 0.95 ? `blur(${(1 - sub) * 8}px)` : undefined }}>Find your next outlier before everyone else.</div>
+          <div style={{ marginTop: 30, fontFamily: FONT.body, fontWeight: 500, fontSize: 44, color: C.textSecondary, opacity: sub, transform: `translate(0, ${(1 - sub) * 24}px)`, filter: sub < 0.95 ? `blur(${(1 - sub) * 8}px)` : undefined }}>Find your next outlier before everyone else.</div>
           <div
             style={{
               position: "relative",

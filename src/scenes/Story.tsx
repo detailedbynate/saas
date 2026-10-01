@@ -204,7 +204,7 @@ export function LogoHit({ dur }: { dur: number }) {
           </div>
           <Kinetic text="Outlier" at={0.1} size={210} stagger={0.04} style={{ textAlign: "left" }} />
         </div>
-        <div style={{ marginTop: 34, fontFamily: FONT.body, fontWeight: 500, fontSize: 46, color: C.textSecondary, opacity: sub, transform: `translate3d(0, ${(1 - sub) * 26}px, 0)`, filter: sub < 0.95 ? `blur(${(1 - sub) * 8}px)` : undefined }}>See what's about to blow up.</div>
+        <div style={{ marginTop: 34, fontFamily: FONT.body, fontWeight: 500, fontSize: 46, color: C.textSecondary, opacity: sub, transform: `translate(0, ${(1 - sub) * 26}px)`, filter: sub < 0.95 ? `blur(${(1 - sub) * 8}px)` : undefined }}>See what's about to blow up.</div>
       </AbsoluteFill>
     </Shot>
   );
