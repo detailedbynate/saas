@@ -159,3 +159,7 @@ then jumped a full pixel every fourth frame. Causes and fixes:
 - **Abrupt camera.** Speed ramps softened (quint → gentler curve) and lengthened to ~0.85s;
   transitions lengthened to 0.6s; the dashboard tilt settles fully flat.
 - Counters use tabular digits so centred numbers don't shimmy.
+- **Whip transitions rebuilt as pushes.** The first version ran the two shots one after the
+  other (leaving two empty frames between them) under a ~90px blur that turned the incoming
+  app into vertical streaks. Now both shots travel together edge to edge on one eased move
+  with light blur, and the app arrives wide before the camera pushes in on the search bar.

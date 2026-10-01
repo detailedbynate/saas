@@ -6,11 +6,10 @@ import { LEAD, clamp } from "./ui";
 export const TRANSITION = LEAD * 2;
 
 /**
- * Transitions. The whips and zooms are *motion-matched*: the outgoing shot
- * accelerates away during the first half of the overlap and the incoming shot
- * arrives during the second half already moving at the same speed in the same
- * direction, so the cut reads as one continuous camera move.
- * - whipL / whipR / whipU / whipD: the camera whips in that direction
+ * Transitions. Whips and zooms are *motion-matched*, so each reads as one continuous
+ * camera move rather than two separate animations.
+ * - whipL / whipR / whipU / whipD: the camera travels in that direction; both shots slide
+ *   together edge to edge (whipD = the content swipes up)
  * - zoomIn:  the camera punches through the outgoing shot into the next
  * - zoomOut: the camera pulls back out of the outgoing shot
  * - blur:    a soft dissolve
@@ -99,11 +98,13 @@ function camera(keys: Key[], t: number): Record<Field, number> {
 }
 
 const DIR: Record<string, [number, number]> = { whipL: [-1, 0], whipR: [1, 0], whipU: [0, -1], whipD: [0, 1] };
+const PUSH = Easing.bezier(0.7, 0, 0.3, 1);
 
 /**
  * What a transition adds on top of the camera. `p` runs 0→1 across the overlap.
- * Outgoing shots use the first half (accelerating), incoming shots the second half
- * (decelerating); both have speed 4·D at the handoff, which is what matches the motion.
+ * Whips are pushes (both shots visible, moving as one). Zooms hand over at the midpoint:
+ * the outgoing shot accelerates through the first half and the incoming one decelerates
+ * through the second, at the same speed where they meet.
  */
 function transition(move: Move, p: number, entering: boolean) {
   const base = { x: 0, y: 0, s: 1, o: 1, b: 0, bx: 0, by: 0 };
@@ -113,18 +114,23 @@ function transition(move: Move, p: number, entering: boolean) {
     const e = Easing.bezier(0.65, 0, 0.35, 1)(q);
     return { ...base, s: entering ? 1 - 0.05 * e : 1 + 0.06 * e, o: 1 - Math.min(1, e * 1.3), b: e * 18 };
   }
+  if (move in DIR) {
+    /*
+     * A push: both shots travel together, edge to edge, on one eased move — the outgoing
+     * shot leaves exactly as the incoming one arrives, with no gap between them. The camera
+     * moves in `dir`, so the content travels the other way. Blur follows speed and stays light.
+     */
+    const [dx, dy] = DIR[move];
+    const e = PUSH(p);
+    const speed = (PUSH(Math.min(1, p + 0.02)) - PUSH(Math.max(0, p - 0.02))) / 0.04; // ≈ 0 at the ends, ~1.9 mid-move
+    const dist = dx !== 0 ? W : H;
+    const travel = entering ? 1 - e : -e;
+    return { ...base, x: dx * dist * travel, y: dy * dist * travel, bx: Math.abs(dx) * speed * 13, by: Math.abs(dy) * speed * 13 };
+  }
   // u: 0→1 over this shot's half of the overlap.
   const u = entering ? Math.min(1, Math.max(0, p * 2 - 1)) : Math.min(1, p * 2);
   const visible = entering ? p >= 0.5 : p < 0.5;
   if (!visible) return { ...base, o: 0 };
-  if (move in DIR) {
-    const [dx, dy] = DIR[move];
-    // The camera whips in `dir`, so the content travels the other way.
-    const travel = entering ? (1 - u) ** 2 : -(u ** 2);
-    const speed = entering ? 2 * (1 - u) : 2 * u; // per half-overlap
-    const dist = dx !== 0 ? W * 1.05 : H * 1.08;
-    return { ...base, x: dx * dist * travel, y: dy * dist * travel, bx: Math.abs(dx) * speed * 46, by: Math.abs(dy) * speed * 46 };
-  }
   // Zooms: scale changes exponentially so the perceived speed is constant at the handoff.
   const inward = move === "zoomIn";
   const k = 1.5; // log-scale travel

@@ -184,7 +184,7 @@ export function LogoHit({ dur }: { dur: number }) {
       id="logo"
       duration={dur}
       enter="zoomIn"
-      exit="whipU"
+      exit="whipD"
       keys={[
         { t: 0, z: 0.92, r: -1 },
         { t: 1.7, z: 1.1, r: 0.6 },

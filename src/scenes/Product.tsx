@@ -23,11 +23,13 @@ export function Finder({ dur }: { dur: number }) {
     <Shot
       id="finder"
       duration={dur}
-      enter="whipU"
+      enter="whipD"
       exit="whipL"
       keys={[
-        { t: 0, x: 815, y: 296, z: 2.3 },
-        { t: 2.3, x: 905, y: 282, z: 2.12 },
+        // Arrive wide enough to read as the app sliding up into view, then push in on the search bar.
+        { t: 0, x: 900, y: 430, z: 1.2 },
+        { t: 1.0, x: 830, y: 300, z: 2.05, ramp: true },
+        { t: 2.3, x: 905, y: 284, z: 2.1 },
         { t: 3.15, x: 960, y: 520, z: 1.03, ramp: true },
         { t: 3.3, x: 962, y: 520, z: 1.035 },
         { t: 4.15, x: 1061, y: 447, z: 1.55, ramp: true },
