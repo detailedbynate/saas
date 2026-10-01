@@ -225,7 +225,7 @@ export function Counter({ value, at, dur, decimals = 0, prefix = "", suffix = ""
   const p = useProg(at, dur, Easing.bezier(0.2, 0.9, 0.3, 1));
   const n = value * p;
   return (
-    <span style={{ fontVariantNumeric: "tabular-nums" }}>
+    <span>
       {prefix}
       {n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
       {suffix}

@@ -5,9 +5,7 @@ import { Backdrop } from "./components/Backdrop";
 import { Finish, Leak } from "./components/fx";
 import { TRANSITION } from "./components/Shot";
 import { LEAD } from "./components/ui";
-import { Cta, Tagline } from "./scenes/Close";
-import { Dash, Finder, Score, Stat } from "./scenes/Product";
-import { Hook, LogoHit, Wall } from "./scenes/Story";
+import { AnalyzeVideo, AnyNiche, Dashboard, End, Hook, Multiply, NicheFinder, Tagline, TrackedChannels, TurnLogo, ViralVideos } from "./scenes/Film";
 import { fontsReady } from "./theme";
 import { FPS, SHOTS, TOTAL_FRAMES } from "./timeline";
 
@@ -15,68 +13,35 @@ const S = SHOTS;
 const end = (s: { at: number; dur: number }) => s.at + s.dur;
 const f = (sec: number) => Math.round(sec * FPS);
 
-/** Sound effects: [file, seconds, volume]. Every move gets a layer: whoosh into it, hit on it. */
+/** Sound effects: [file, seconds, volume]. A soft whoosh under each dissolve, a hit on each landing. */
 const SFX: [string, number, number][] = [
-  // Hook: a soft swell under each line
-  ["shimmer", 0.1, 0.3],
-  ["whoosh-fast", 1.2, 0.22],
-  ["shimmer", 1.3, 0.35],
-  // Punch into the first Short
-  ["whoosh", end(S.hook) - 0.3, 0.45],
-  ["subhit", S.wall.at, 0.5],
-  // Pull-back reveal of the wall
-  ["whoosh", S.wall.at + 1.0, 0.5],
-  ["ticker", S.wall.at + 1.6, 0.18],
-  // Outliers light up
-  ["subhit", S.wall.at + 3.2, 0.45],
-  ...[0, 1, 2].map((i): [string, number, number] => ["pop", S.wall.at + 3.25 + i * 0.14, 0.45]),
-  ["ding", S.wall.at + 3.3, 0.3],
-  // Riser into the logo, then the drop
-  ["riser", S.logo.at - 1.5, 0.5],
-  ["subhit", S.logo.at, 0.9],
-  ["shimmer", S.logo.at + 0.05, 0.5],
-  // Whip into the product
-  ["whoosh", end(S.logo) - 0.28, 0.55],
-  ["typing", S.finder.at + 0.1, 0.4],
-  ["typing", S.finder.at + 0.75, 0.35],
-  ["click", S.finder.at + 2.2, 0.6],
-  ["subhit", S.finder.at + 2.4, 0.45],
-  ["whoosh-fast", S.finder.at + 2.5, 0.35],
-  ["whoosh-fast", S.finder.at + 3.35, 0.35],
-  ["pop", S.finder.at + 3.85, 0.4],
-  ["whoosh-fast", S.finder.at + 4.7, 0.35],
-  ["pop", S.finder.at + 5.2, 0.4],
-  ["pop", S.finder.at + 5.38, 0.35],
-  // Score
-  ["whoosh", end(S.finder) - 0.28, 0.55],
-  ["whoosh-fast", S.score.at + 0.6, 0.38],
-  ["ding", S.score.at + 1.1, 0.4],
-  ["pop", S.score.at + 1.25, 0.4],
-  ["whoosh-fast", S.score.at + 2.0, 0.35],
-  ["pop", S.score.at + 2.6, 0.38],
-  ["whoosh-fast", S.score.at + 3.1, 0.3],
-  // Stat
-  ["whoosh", end(S.score) - 0.3, 0.5],
-  ["subhit", S.stat.at + 0.05, 0.8],
-  ["ticker", S.stat.at + 0.1, 0.3],
-  ["shimmer", S.stat.at + 1.7, 0.4],
-  ["whoosh-fast", S.stat.at + 1.6, 0.3],
-  // Dashboard
-  ["whoosh", end(S.stat) - 0.28, 0.55],
-  ...[0, 1, 2].map((i): [string, number, number] => ["pop", S.dash.at + 1.0 + i * 0.13, 0.4]),
-  ["whoosh-fast", S.dash.at + 0.5, 0.35],
-  ["whoosh-fast", S.dash.at + 2.45, 0.38],
-  ["pop", S.dash.at + 3.15, 0.4],
-  // Tagline: breakdown
-  ["shimmer", S.tagline.at + 0.15, 0.4],
-  ["shimmer", S.tagline.at + 1.4, 0.5],
-  ["riser", S.cta.at - 1.5, 0.45],
-  // CTA: the final hit
-  ["subhit", S.cta.at, 0.95],
-  ["shimmer", S.cta.at + 0.05, 0.5],
-  ["pop", S.cta.at + 0.55, 0.4],
-  ["click", S.cta.at + 1.75, 0.7],
-  ["cash", S.cta.at + 1.8, 0.35],
+  ["shimmer", 0.2, 0.3],
+  ["shimmer", 1.45, 0.35],
+  ["whoosh", S.multiply.at + 0.7, 0.4],
+  ["shimmer", S.multiply.at + 1.15, 0.3],
+  ["shimmer", S.turn.at + 0.25, 0.3],
+  ["riser", S.turn.at + 0.5, 0.5],
+  ["subhit", S.turn.at + 2, 0.9],
+  ["shimmer", S.turn.at + 2.05, 0.5],
+  ["whoosh", S.niche.at - 0.3, 0.45],
+  ["typing", S.niche.at + 0.5, 0.4],
+  ["click", S.niche.at + 1.25, 0.55],
+  ["ticker", S.niche.at + 1.7, 0.25],
+  ...[0, 1, 2].map((i): [string, number, number] => ["pop", S.viral.at + 0.1 + i * 0.14, 0.25]),
+  ["ticker", S.viral.at + 0.65, 0.28],
+  ["typing", S.analyze.at + 0.45, 0.4],
+  ["click", S.analyze.at + 1.4, 0.55],
+  ["ding", S.analyze.at + 2.4, 0.35],
+  ...[0, 1, 2].map((i): [string, number, number] => ["pop", S.tracked.at + 0.35 + i * 0.09, 0.3]),
+  ["shimmer", S.any.at + 0.1, 0.4],
+  ["whoosh", S.dash.at - 0.3, 0.45],
+  ["shimmer", S.tagline.at + 0.15, 0.35],
+  ["shimmer", S.tagline.at + 1.25, 0.45],
+  ["riser", S.end.at - 1.5, 0.4],
+  ["subhit", S.end.at, 0.9],
+  ["shimmer", S.end.at + 0.05, 0.45],
+  // A soft whoosh under every dissolve between features
+  ...[S.niche, S.viral, S.analyze, S.tracked, S.any].map((s): [string, number, number] => ["whoosh", end(s) - 0.25, 0.22]),
 ];
 
 /** A shot's Sequence starts LEAD early so its transition can straddle the boundary. */
@@ -89,14 +54,16 @@ function Film() {
     <AbsoluteFill style={{ background: "#000" }}>
       <Backdrop />
       <Sequence {...shot(S.hook)}><Hook dur={S.hook.dur} /></Sequence>
-      <Sequence {...shot(S.wall)}><Wall dur={S.wall.dur} /></Sequence>
-      <Sequence {...shot(S.logo)}><LogoHit dur={S.logo.dur} /></Sequence>
-      <Sequence {...shot(S.finder)}><Finder dur={S.finder.dur} /></Sequence>
-      <Sequence {...shot(S.score)}><Score dur={S.score.dur} /></Sequence>
-      <Sequence {...shot(S.stat)}><Stat dur={S.stat.dur} /></Sequence>
-      <Sequence {...shot(S.dash)}><Dash dur={S.dash.dur} /></Sequence>
+      <Sequence {...shot(S.multiply)}><Multiply dur={S.multiply.dur} /></Sequence>
+      <Sequence {...shot(S.turn)}><TurnLogo dur={S.turn.dur} /></Sequence>
+      <Sequence {...shot(S.niche)}><NicheFinder dur={S.niche.dur} /></Sequence>
+      <Sequence {...shot(S.viral)}><ViralVideos dur={S.viral.dur} /></Sequence>
+      <Sequence {...shot(S.analyze)}><AnalyzeVideo dur={S.analyze.dur} /></Sequence>
+      <Sequence {...shot(S.tracked)}><TrackedChannels dur={S.tracked.dur} /></Sequence>
+      <Sequence {...shot(S.any)}><AnyNiche dur={S.any.dur} /></Sequence>
+      <Sequence {...shot(S.dash)}><Dashboard dur={S.dash.dur} /></Sequence>
       <Sequence {...shot(S.tagline)}><Tagline dur={S.tagline.dur} /></Sequence>
-      <Sequence {...shot(S.cta)}><Cta dur={S.cta.dur} /></Sequence>
+      <Sequence {...shot(S.end)}><End dur={S.end.dur} /></Sequence>
     </AbsoluteFill>
   );
 }
@@ -127,9 +94,8 @@ export function OutlierLaunch({ motionBlur, lightLeaks }: LaunchProps) {
         )}
         {lightLeaks ? (
           <>
-            <Leak at={S.logo.at + 0.1} seed={3} dur={1.2} />
-            <Leak at={S.stat.at + 0.1} seed={7} dur={1.0} strength={0.3} />
-            <Leak at={S.cta.at + 0.1} seed={11} dur={1.3} />
+            <Leak at={S.turn.at + 2.1} seed={3} dur={1.2} />
+            <Leak at={S.end.at + 0.1} seed={11} dur={1.3} />
           </>
         ) : null}
       </AbsoluteFill>

@@ -1,6 +1,6 @@
 # Outlier launch video
 
-A 33-second 16:9 (1920×1080, 60fps) launch video for [Outlier](https://www.useoutlier.online), built in code with [Remotion](https://www.remotion.dev). It uses a real screen recording of the app and real Shorts clips (`public/footage/`).
+A 33.5-second 16:9 (1920×1080, 60fps) launch video for [Outlier](https://www.useoutlier.online), built in code with [Remotion](https://www.remotion.dev). It uses a real screen recording of the app and real Shorts clips (`public/footage/`).
 
 - `out/outlier-launch-draft.mp4`: draft render (no motion blur or light leaks)
 - `out/outlier-launch.mp4`: the final, once rendered with `npm run render:final`
@@ -27,9 +27,7 @@ The video lands in `out\outlier-launch.mp4`. `render:final` turns on true motion
 ## Edit it
 
 - `src/timeline.ts`: when each shot starts and how long it runs, in seconds
-- `src/scenes/Story.tsx`: the hook, the wall of Shorts and the logo hit
-- `src/scenes/Product.tsx`: Niche Finder, opportunity score, the 405× stat and the dashboard (all on the real app recording)
-- `src/scenes/Close.tsx`: the tagline and the call to action
+- `src/scenes/Film.tsx`: all eleven scenes (hook, Shorts multiplying, logo, four features, any niche, dashboard, tagline, end card)
 - `src/components/Shot.tsx`: the camera (spline moves, speed ramps, 3D tilt) and the motion-matched transitions (whips, zoom-throughs, blur, cut)
 - `src/components/fx.tsx`: springs, per-letter text, footage cards, the app window, callouts, dust, sparks, light leaks, film grain
 - `src/components/kit.tsx`, `ui.tsx`: shared parts (hand cursor, logo, counters, easing)
@@ -57,6 +55,6 @@ Installed and ready to use (not all are used by the current cut yet):
 
 All music and sound effects are synthesized from scratch by `scripts/make_audio.py` (numpy/scipy), so they're original and free to use anywhere. Regenerate with `npm run audio`.
 
-The music is 120 BPM, so one bar is 2 seconds, and every cut lands on a beat (a multiple of 0.5s). The drop lands on the logo (8s), the breakdown on the tagline (26.5s) and the final hit on the call to action (29.5s). If you change shot timings, update `DROP`, `BREAK`, `FINAL` and `END` in the script to match.
+The music is 120 BPM, so one bar is 2 seconds, and every cut lands on a beat (a multiple of 0.5s). The drop lands on the logo (8s), the breakdown on the tagline (28s) and the final hit on the end card (30.5s). If you change shot timings, update `DROP`, `BREAK`, `FINAL` and `END` in the script to match.
 
 To use a library track instead, replace `public/audio/music.wav`.

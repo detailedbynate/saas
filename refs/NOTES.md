@@ -163,3 +163,27 @@ then jumped a full pixel every fourth frame. Causes and fixes:
   other (leaving two empty frames between them) under a ~90px blur that turned the incoming
   app into vertical streaks. Now both shots travel together edge to edge on one eased move
   with light blur, and the app arrives wide before the camera pushes in on the search bar.
+
+## v7: simpler scenes, the references' camera
+
+Feedback on v6: smoother, but too detailed. Brief: list the features simply and move the way
+the Algrow and LernGlow films move.
+
+Camera measured with `refs/camera.py` (feature tracking → zoom %/s and pan px/s per second):
+- Both films reveal each scene on a quick **zoom-out of 20–35%/s** lasting about a second.
+- Then they **hold or push very slowly**: 0–5%/s, and LernGlow's end card sits at +1.6%/s.
+- Push-ins of +25%/s appear on a few payoff moments (Algrow's collage and card).
+- No whips. Scenes dissolve through blur or punch through on a zoom.
+
+v7 applies exactly that: every scene uses `settle()` (arrive ~22% wide, ease to rest in 1.2s,
+then +2%/s), dissolves between scenes, a zoom-through out of the logo and into the dashboard,
+and a +1.6%/s push on the end card. Elements resolve out of blur on one long ease-out; text
+leaves on a sideways smear. Nothing bounces.
+
+Scenes (one idea each): "Going viral / isn't luck." → one Short becomes many →
+"A few break out." → orbs gather into the logo (drop) → Niche Finder (search → opportunity
+score) → Viral Videos (collage + view count) → Analyze Video (link → 79× score) →
+Tracked Channels (three cards) → "In any niche" (floating tags) → the dashboard settling out
+of a 3D tilt → "Less guessing. More outliers." → logo + URL.
+
+The app recording is used once (the dashboard). The v6 walkthrough scenes are in git history.
