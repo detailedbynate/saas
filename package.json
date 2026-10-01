@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "studio": "remotion studio",
-    "render": "remotion render OutlierLaunch out/outlier-launch-draft.mp4 --props=./props/draft.json --gl=angle --concurrency=75%",
-    "render:final": "remotion render OutlierLaunch out/outlier-launch.mp4 --props=./props/final.json --gl=angle --concurrency=75%",
+    "render": "remotion render OutlierLaunch out/outlier-launch-draft.mp4 --props=./props/draft.json --gl=angle",
+    "render:final": "remotion render OutlierLaunch out/outlier-launch.mp4 --props=./props/final.json --gl=angle",
     "audio": "python3 scripts/make_audio.py"
   },
   "dependencies": {

@@ -36,7 +36,7 @@ The video lands in `out\outlier-launch.mp4`. `render:final` turns on true motion
 - `src/Video.tsx`: scene order, the grade, and the sound-effect list
 - `refs/NOTES.md`: the reference-video studies behind each version
 
-In a Claude Code cloud session, plain `npm run render` works (Remotion downloads its own Chrome). Don't pass `--gl=swangle` there; it is about 4× slower.
+The npm scripts pass `--gl=angle` to use the GPU. To use more of the processor, add `-- --concurrency=8` (each thread needs roughly 1–1.5 GB of RAM). In a Claude Code cloud session there is no GPU: run `npx remotion render OutlierLaunch out/draft.mp4 --props=./props/draft.json` without a `--gl` flag (`swangle` is about 4× slower).
 
 ## Skills and packages for higher-quality animation
 
