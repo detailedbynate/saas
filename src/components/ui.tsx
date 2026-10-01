@@ -21,11 +21,14 @@ export const DRIFT = Easing.bezier(0.37, 0, 0.63, 1);
 /** Light overshoot, used sparingly (the refs barely overshoot). */
 export const BACK = Easing.bezier(0.34, 1.32, 0.64, 1);
 
-/** Current time in seconds within the enclosing Sequence. */
+/** Shots start this many seconds before their boundary, so transitions can straddle it. */
+export const LEAD = 0.25;
+
+/** Scene time in seconds, where 0 is the shot's boundary (the Sequence starts LEAD earlier). */
 export function useTime() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  return frame / fps;
+  return frame / fps - LEAD;
 }
 
 /** 0→1 between `at` and `at + dur` seconds. */

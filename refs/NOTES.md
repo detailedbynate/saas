@@ -106,3 +106,38 @@ No Algrow footage, text or branding is used.
 
 Motion measured on the reference (`motion.py`, `continuity.py`): 9.8% still frames, longest
 still 0.67s, camera mostly constant-speed drift with ease-out entrances.
+
+## v6: original 33s cut with real footage
+
+Brief: not a copy of any reference; super smooth; 30–35s; use the client's uploads; apply the
+full set of finishing techniques. Second reference studied for *story shape* only:
+MotionTimeFrame's LernGlow promo (problem → turn → logo forms → product zooms → big stat →
+tagline → CTA; 37.7s, median motion event 0.83s).
+
+Footage (in `public/footage/`):
+- `app.mp4` + `app-*.png`: the client's screen recording of Outlier, cropped to the app
+  (browser tabs and address bar removed).
+- `short-a/b/c`, `hoops-1/2/3`: 6s vertical cuts of the Shorts and basketball clips the client
+  supplied. These are other creators' and the NBA's footage: fine as placeholders, but clear
+  the rights (or swap in owned/licensed clips) before running this as a paid ad.
+
+Story: "Going viral isn't luck." → one Short → speed-ramp back to a wall of them →
+"A few break out." (405×, 151×, 137× light up) → logo on the drop → Niche Finder (real
+typing, results, money, viral competitors) → opportunity score → 405× · "In any niche." →
+dashboard in 3D with live Shorts lifting off it → "Stop guessing. Find the outliers." → CTA.
+
+Techniques:
+1. Motion-matched transitions: outgoing shot accelerates away in the first half of the
+   overlap, incoming arrives in the second half at the same speed and direction (whips,
+   zoom-throughs), with directional blur.
+2. Speed ramps: camera keys marked `ramp` ease hard in and out (easeInOutQuint); the rest
+   glide through on a spline.
+3. Springs with overshoot for pops, badges, callouts and the logo; follow-through staggers.
+4. Depth: blurred foreground cards crossing the lens, niche pills orbiting with depth-of-field,
+   live cards lifting off the 3D-tilted dashboard, drifting dust.
+5. Per-letter kinetic type: letters rise out of a mask on springs while tracking tightens.
+6. Finishing pass: film grain that changes every frame, vignette, a light grade, sparks on
+   hits, shockwave rings, WebGL light leaks (final render).
+7. True motion blur via `<HtmlInCanvasMotionBlur>` (final render, 8 samples).
+8. Sound: every move has a whoosh into it and a hit on it; new sub-hit, shimmer and riser
+   layers; music re-timed (drop 8s, breakdown 26.5s, final hit 29.5s).

@@ -16,7 +16,7 @@ SR = 44100
 BPM = 120
 BEAT = 60 / BPM
 BAR = BEAT * 4
-LENGTH = 26.0  # seconds; the video is 25s, plus a little tail
+LENGTH = 34.0  # seconds; the video is 33s, plus a little tail
 
 OUT = Path(__file__).resolve().parent.parent / "public" / "audio"
 rng = np.random.default_rng(7)
@@ -234,6 +234,25 @@ def impact():
     return reverb(np.tanh((boom + crack + shimmer) * 1.8), 2.5, 0.3)
 
 
+def subhit():
+    """Layered hit for drops and big moves: a deep sub drop, a soft thump and a short airy tail."""
+    t = t_axis(1.6)
+    f = 38 + 70 * np.exp(-t * 14)
+    sub = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 3.2)
+    thump = lp(rng.standard_normal(len(t)), 900) * np.exp(-t * 26) * 0.6
+    air = hp(rng.standard_normal(len(t)), 5000) * np.exp(-t * 7) * 0.06
+    return reverb(np.tanh((sub + thump) * 1.6) + air, 1.6, 0.22)
+
+
+def shimmer():
+    """A soft bright swell: a stack of detuned high partials fading in and out, for text landing."""
+    t = t_axis(1.4)
+    x = sum(np.sin(2 * np.pi * midi(n) * t + i) for i, n in enumerate((81, 84, 88, 93, 96))) / 5
+    e = np.sin(np.pi * np.clip(t / 1.4, 0, 1)) ** 2 * np.exp(-t * 1.2)
+    air = hp(rng.standard_normal(len(t)), 7000) * e * 0.12
+    return reverb(x * e * 0.6 + air, 2.0, 0.45)
+
+
 def click():
     t = t_axis(0.06)
     blip = np.sin(2 * np.pi * 1900 * t) * np.exp(-t * 160)
@@ -298,10 +317,10 @@ def cash():
 # ---------------------------------------------------------------- arrangement
 
 # Section boundaries in seconds; these match SHOTS in src/timeline.ts.
-DROP = 3.5         # first feature, right after the scan
-BREAK = 23.5       # end card (no breakdown in this cut)
-FINAL = 23.5       # end card
-END = 24.5         # last chord
+DROP = 8.0         # logo hit
+BREAK = 26.5       # tagline: drums drop out
+FINAL = 29.5       # call to action
+END = 32.5         # last chord
 
 
 def build_music():
@@ -391,3 +410,6 @@ if __name__ == "__main__":
     write("ding.wav", ding(), 0.7)
     write("ticker.wav", ticker(1.0, 12, 34), 0.6)
     write("cash.wav", cash(), 0.7)
+    write("subhit.wav", subhit(), 0.85)
+    write("shimmer.wav", shimmer(), 0.6)
+    write("riser.wav", riser(1.5), 0.7)
