@@ -16,7 +16,7 @@ SR = 44100
 BPM = 120
 BEAT = 60 / BPM
 BAR = BEAT * 4
-LENGTH = 54.0  # seconds; the video is 53s, plus a little tail
+LENGTH = 33.0  # seconds; the video is 32s, plus a little tail
 
 OUT = Path(__file__).resolve().parent.parent / "public" / "audio"
 rng = np.random.default_rng(7)
@@ -297,11 +297,11 @@ def cash():
 
 # ---------------------------------------------------------------- arrangement
 
-# Section boundaries in seconds; these match src/timeline.ts.
-DROP = 10.0        # logo reveal
-BREAK = 42.0       # "why" montage: drums drop out
-FINAL = 46.0       # pricing / CTA
-END = 52.0         # last chord
+# Section boundaries in seconds; these match SHOTS in src/timeline.ts.
+DROP = 6.0         # logo reveal
+BREAK = 24.0       # "why" montage: drums drop out
+FINAL = 26.0       # pricing / CTA
+END = 31.0         # last chord
 
 
 def build_music():
@@ -327,11 +327,10 @@ def build_music():
             for s in range(4):
                 place(drums, hat(open_=(s == 2)), time + s * BEAT / 4, 0.18 if s == 2 else 0.12 + 0.05 * (s % 2))
         elif time < DROP:
-            # Intro: a muted heartbeat pulse, hats from bar 3
+            # Intro: a muted pulse from the first frame, hats from bar 2
+            place(drums, lp(kick(), 400), time, 0.55)
             if time >= 2.0:
-                place(drums, lp(kick(), 300), time, 0.5)
-            if time >= 4.0:
-                place(drums, hat(), time + BEAT / 2, 0.1)
+                place(drums, hat(), time + BEAT / 2, 0.12)
         else:
             # Breakdown: just offbeat hats
             place(drums, hat(), time + BEAT / 2, 0.08)
@@ -386,9 +385,9 @@ if __name__ == "__main__":
     write("whoosh.wav", whoosh(), 0.8)
     write("whoosh-fast.wav", swoosh_up(), 0.8)
     write("click.wav", click(), 0.7)
-    write("typing.wav", typing(1.3), 0.6)
-    write("typing-long.wav", typing(2.4, 22), 0.6)
+    write("typing.wav", typing(0.65, 26), 0.6)
+    write("typing-long.wav", typing(2.1, 30), 0.6)
     write("pop.wav", pop(), 0.7)
     write("ding.wav", ding(), 0.7)
-    write("ticker.wav", ticker(1.4), 0.6)
+    write("ticker.wav", ticker(1.0, 12, 34), 0.6)
     write("cash.wav", cash(), 0.7)

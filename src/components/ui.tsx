@@ -1,64 +1,64 @@
 import type { CSSProperties, ReactNode } from "react";
-import { AbsoluteFill, Easing, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { Easing, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { C, FONT, GRADIENT_TEXT } from "../theme";
 
+/*
+ * Motion primitives. Everything is timed in seconds so the video can render at any fps.
+ * Eases mirror After Effects' speed graphs: a hard, fast start and a long, soft landing.
+ */
+
 export const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
-export const easeOut = Easing.bezier(0.2, 0.8, 0.2, 1);
-export const easeInOut = Easing.bezier(0.65, 0, 0.35, 1);
+/** Expo-out: elements arriving. */
+export const OUT = Easing.bezier(0.16, 1, 0.3, 1);
+/** Strong ease in-out: camera moves and whips. */
+export const IN_OUT = Easing.bezier(0.76, 0, 0.24, 1);
+/** Gentle in-out: slow camera drifts. */
+export const DRIFT = Easing.bezier(0.45, 0, 0.25, 1);
+/** Overshoot: pops and stamps. */
+export const BACK = Easing.bezier(0.34, 1.56, 0.64, 1);
 
-/** 0→1 over [start, start+dur], eased. */
-export function useProgress(start: number, dur: number, easing = easeOut) {
-  const frame = useCurrentFrame();
-  return interpolate(frame, [start, start + dur], [0, 1], { ...clamp, easing });
-}
-
-export function useSpring(delay = 0, damping = 16, mass = 0.7) {
+/** Current time in seconds within the enclosing Sequence. */
+export function useTime() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  return spring({ frame: frame - delay, fps, config: { damping, mass } });
+  return frame / fps;
+}
+
+/** 0→1 between `at` and `at + dur` seconds. */
+export function prog(t: number, at: number, dur: number, easing = OUT) {
+  return interpolate(t, [at, at + dur], [0, 1], { ...clamp, easing });
+}
+
+export function useProg(at: number, dur: number, easing = OUT) {
+  return prog(useTime(), at, dur, easing);
 }
 
 /**
- * Wraps a scene: blurs and scales in on entry, pushes forward and blurs out on exit.
- * Every scene drifts slowly toward the camera, which keeps static frames alive.
+ * Text that slides up out of a mask, word by word — the classic AE text reveal.
+ * Each word is clipped by its own line box, so it appears to rise from nowhere.
  */
-export function Scene({ duration, children, enter = 12, exit = 10, drift = 0.04 }: { duration: number; children: ReactNode; enter?: number; exit?: number; drift?: number }) {
-  const frame = useCurrentFrame();
-  const inP = interpolate(frame, [0, enter], [0, 1], { ...clamp, easing: easeOut });
-  const outP = interpolate(frame, [duration - exit, duration], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
-  const scale = interpolate(inP, [0, 1], [1.06, 1]) * (1 + drift * (frame / duration)) * (1 + outP * 0.12);
-  const blur = (1 - inP) * 14 + outP * 18;
-  const opacity = inP * (1 - outP);
-  return (
-    <AbsoluteFill style={{ opacity, transform: `scale(${scale})`, filter: blur > 0.1 ? `blur(${blur}px)` : undefined }}>
-      {children}
-    </AbsoluteFill>
-  );
-}
-
-/** Words that rise and un-blur one after another — the core kinetic-type move. */
-export function Words({ text, start = 0, stagger = 3, style, highlight = [], gradient = false }: { text: string; start?: number; stagger?: number; style?: CSSProperties; highlight?: string[]; gradient?: boolean }) {
-  const frame = useCurrentFrame();
+export function Words({ text, at = 0, stagger = 0.04, dur = 0.7, style, highlight = [], gradient = false }: { text: string; at?: number; stagger?: number; dur?: number; style?: CSSProperties; highlight?: string[]; gradient?: boolean }) {
+  const t = useTime();
   const words = text.split(" ");
   return (
-    <span style={{ display: "inline-block", ...style }}>
+    <span style={{ display: "inline", ...style }}>
       {words.map((w, i) => {
-        const p = interpolate(frame, [start + i * stagger, start + i * stagger + 14], [0, 1], { ...clamp, easing: easeOut });
-        const lit = highlight.includes(w.replace(/[.,?!]/g, ""));
+        const p = prog(t, at + i * stagger, dur);
+        const lit = gradient || highlight.includes(w.replace(/[.,?!]/g, ""));
         return (
-          <span
-            key={i}
-            style={{
-              display: "inline-block",
-              whiteSpace: "pre",
-              opacity: p,
-              transform: `translateY(${(1 - p) * 0.45}em)`,
-              filter: p < 1 ? `blur(${(1 - p) * 10}px)` : undefined,
-              ...(lit || gradient ? GRADIENT_TEXT : null),
-            }}
-          >
-            {w}
-            {i < words.length - 1 ? " " : ""}
+          <span key={i} style={{ display: "inline-block", overflow: "hidden", verticalAlign: "top", paddingBottom: "0.08em", marginBottom: "-0.08em" }}>
+            <span
+              style={{
+                display: "inline-block",
+                whiteSpace: "pre",
+                transform: `translateY(${(1 - p) * 105}%) rotate(${(1 - p) * 4}deg)`,
+                transformOrigin: "0 100%",
+                ...(lit ? GRADIENT_TEXT : null),
+              }}
+            >
+              {w}
+              {i < words.length - 1 ? " " : ""}
+            </span>
           </span>
         );
       })}
@@ -66,8 +66,22 @@ export function Words({ text, start = 0, stagger = 3, style, highlight = [], gra
   );
 }
 
-export function Eyebrow({ children, start = 0 }: { children: ReactNode; start?: number }) {
-  const p = useProgress(start, 14);
+/** Fade + rise for small UI bits. */
+export function Rise({ at, children, dist = 24, dur = 0.6, style }: { at: number; children: ReactNode; dist?: number; dur?: number; style?: CSSProperties }) {
+  const p = useProg(at, dur);
+  return <div style={{ opacity: Math.min(1, p * 1.8), transform: `translateY(${(1 - p) * dist}px)`, ...style }}>{children}</div>;
+}
+
+/** Scale in with a little overshoot. */
+export function Pop({ at, children, dur = 0.5, from = 0.4, style }: { at: number; children: ReactNode; dur?: number; from?: number; style?: CSSProperties }) {
+  const t = useTime();
+  const p = prog(t, at, dur, BACK);
+  const o = prog(t, at, dur * 0.4, Easing.linear);
+  return <div style={{ display: "inline-block", opacity: o, transform: `scale(${from + (1 - from) * p})`, ...style }}>{children}</div>;
+}
+
+export function Eyebrow({ children, at = 0 }: { children: ReactNode; at?: number }) {
+  const p = useProg(at, 0.6);
   return (
     <div
       style={{
@@ -85,7 +99,8 @@ export function Eyebrow({ children, start = 0 }: { children: ReactNode; start?: 
         letterSpacing: "0.06em",
         textTransform: "uppercase",
         opacity: p,
-        transform: `translateY(${(1 - p) * 16}px)`,
+        transform: `translateY(${(1 - p) * 14}px)`,
+        clipPath: `inset(0 ${(1 - p) * 100}% 0 0 round 999px)`,
       }}
     >
       <span style={{ width: 8, height: 8, borderRadius: 99, background: C.accent, boxShadow: `0 0 12px ${C.accent}` }} />
@@ -102,7 +117,6 @@ export function Glass({ children, style }: { children: ReactNode; style?: CSSPro
         border: `1px solid ${C.glassBorder}`,
         borderRadius: 28,
         boxShadow: "0 1px 0 rgba(255,255,255,0.07) inset, 0 40px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,0,0,0.4)",
-        backdropFilter: "blur(20px)",
         ...style,
       }}
     >
@@ -111,18 +125,17 @@ export function Glass({ children, style }: { children: ReactNode; style?: CSSPro
   );
 }
 
-/** A panel that tilts up out of perspective into place, like a product shot. */
-export function TiltIn({ children, start = 0, from = 28, style }: { children: ReactNode; start?: number; from?: number; style?: CSSProperties }) {
-  const s = useSpring(start, 18, 0.9);
-  const frame = useCurrentFrame();
-  const float = Math.sin((frame - start) / 30) * 4;
+/** A panel that swings up out of 3D perspective into place. */
+export function TiltIn({ children, at = 0, from = 24, dur = 1, style }: { children: ReactNode; at?: number; from?: number; dur?: number; style?: CSSProperties }) {
+  const t = useTime();
+  const p = prog(t, at, dur);
   return (
-    <div style={{ perspective: 2000, ...style }}>
+    <div style={{ perspective: 2200, ...style }}>
       <div
         style={{
-          transform: `translateY(${(1 - s) * 140 + float}px) rotateX(${(1 - s) * from}deg) scale(${0.9 + 0.1 * s})`,
+          transform: `translateY(${(1 - p) * 160}px) rotateX(${(1 - p) * from}deg) scale(${0.92 + 0.08 * p})`,
           transformOrigin: "50% 100%",
-          opacity: Math.min(1, s * 1.6),
+          opacity: prog(t, at, dur * 0.35, Easing.linear),
         }}
       >
         {children}
@@ -135,30 +148,28 @@ export function Logo({ size }: { size: number }) {
   return <Img src={staticFile("brand/logo-512.png")} style={{ width: size, height: size, display: "block" }} />;
 }
 
-export function Counter({ value, start, dur, decimals = 0, prefix = "", suffix = "", format }: { value: number; start: number; dur: number; decimals?: number; prefix?: string; suffix?: string; format?: (n: number) => string }) {
-  const p = useProgress(start, dur, Easing.out(Easing.cubic));
+export function Counter({ value, at, dur, decimals = 0, prefix = "", suffix = "" }: { value: number; at: number; dur: number; decimals?: number; prefix?: string; suffix?: string }) {
+  const p = useProg(at, dur, Easing.bezier(0.2, 0.9, 0.3, 1));
   const n = value * p;
-  const text = format ? format(n) : n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   return (
     <span>
       {prefix}
-      {text}
+      {n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
       {suffix}
     </span>
   );
 }
 
-/** Text typed out character by character, with a blinking caret. */
-export function Typed({ text, start, cps = 18, caret = true }: { text: string; start: number; cps?: number; caret?: boolean }) {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const shown = Math.max(0, Math.floor(((frame - start) / fps) * cps));
+/** Text typed out character by character, with a caret. */
+export function Typed({ text, at, cps = 24, caret = true }: { text: string; at: number; cps?: number; caret?: boolean }) {
+  const t = useTime();
+  const shown = Math.max(0, Math.floor((t - at) * cps));
   const done = shown >= text.length;
-  const blink = Math.floor(frame / 15) % 2 === 0;
+  const blink = Math.floor(t * 2.5) % 2 === 0;
   return (
     <span>
       {text.slice(0, shown)}
-      {caret && (!done || blink) && frame >= start - 10 ? <span style={{ color: C.accent, fontWeight: 400 }}>|</span> : null}
+      {caret && (!done || blink) && t >= at - 0.2 ? <span style={{ color: C.accent, fontWeight: 400 }}>|</span> : null}
     </span>
   );
 }
@@ -180,35 +191,20 @@ export function SearchGlyph({ size = 28 }: { size?: number }) {
   );
 }
 
-/** Mouse pointer gliding through waypoints [frame, x, y]; clicks pulse a ring. */
+/** Mouse pointer gliding through waypoints [seconds, x, y]; clicks pulse a ring. */
 export function Cursor({ path, clicks = [] }: { path: [number, number, number][]; clicks?: number[] }) {
-  const frame = useCurrentFrame();
-  const frames = path.map((p) => p[0]);
-  const x = interpolate(frame, frames, path.map((p) => p[1]), { ...clamp, easing: easeInOut });
-  const y = interpolate(frame, frames, path.map((p) => p[2]), { ...clamp, easing: easeInOut });
-  const opacity = interpolate(frame, [frames[0], frames[0] + 8], [0, 1], clamp);
-  const press = clicks.some((c) => frame >= c && frame < c + 5);
+  const t = useTime();
+  const times = path.map((p) => p[0]);
+  const x = interpolate(t, times, path.map((p) => p[1]), { ...clamp, easing: IN_OUT });
+  const y = interpolate(t, times, path.map((p) => p[2]), { ...clamp, easing: IN_OUT });
+  const opacity = prog(t, times[0], 0.15, Easing.linear);
+  const press = clicks.some((c) => t >= c && t < c + 0.1);
   return (
     <div style={{ position: "absolute", left: x, top: y, opacity, pointerEvents: "none", zIndex: 50 }}>
       {clicks.map((c) => {
-        const p = interpolate(frame, [c, c + 16], [0, 1], clamp);
-        if (frame < c || p >= 1) return null;
-        return (
-          <div
-            key={c}
-            style={{
-              position: "absolute",
-              left: -30,
-              top: -30,
-              width: 60,
-              height: 60,
-              borderRadius: 99,
-              border: `3px solid ${C.accentText}`,
-              opacity: 1 - p,
-              transform: `scale(${0.4 + p})`,
-            }}
-          />
-        );
+        const p = prog(t, c, 0.4);
+        if (t < c || p >= 1) return null;
+        return <div key={c} style={{ position: "absolute", left: -30, top: -30, width: 60, height: 60, borderRadius: 99, border: `3px solid ${C.accentText}`, opacity: 1 - p, transform: `scale(${0.4 + p})` }} />;
       })}
       <svg width="40" height="40" viewBox="0 0 24 24" style={{ transform: `scale(${press ? 0.85 : 1})`, filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.6))" }}>
         <path d="M4 2.5 19.5 12l-7 1.6-3.6 6.4z" fill="#fff" stroke="#000" strokeWidth="1.2" strokeLinejoin="round" />
@@ -219,17 +215,7 @@ export function Cursor({ path, clicks = [] }: { path: [number, number, number][]
 
 export function Title({ children, size = 96, style }: { children: ReactNode; size?: number; style?: CSSProperties }) {
   return (
-    <div
-      style={{
-        fontFamily: FONT.display,
-        fontWeight: 800,
-        fontSize: size,
-        lineHeight: 1.04,
-        letterSpacing: "-0.035em",
-        color: C.text,
-        ...style,
-      }}
-    >
+    <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: size, lineHeight: 1.05, letterSpacing: "-0.035em", color: C.text, ...style }}>
       {children}
     </div>
   );

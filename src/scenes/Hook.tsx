@@ -1,13 +1,14 @@
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
-import { Counter, Scene, Title, Words, clamp, easeOut, useSpring } from "../components/ui";
+import { AbsoluteFill } from "remotion";
+import { Shot } from "../components/Shot";
+import { BACK, Counter, OUT, Title, Words, prog, useTime } from "../components/ui";
 import { C, FONT, GRADIENT_TEXT } from "../theme";
 
-/** A Short from a tiny channel, its views spinning up past millions. */
+/** A Short from a tiny channel whose views blow past millions. */
 function ShortCard() {
-  const frame = useCurrentFrame();
-  const s = useSpring(4, 15, 0.8);
-  const badge = useSpring(118, 9, 0.6);
-  const glow = interpolate(frame, [100, 125], [0, 1], { ...clamp, easing: easeOut });
+  const t = useTime();
+  const s = prog(t, 0, 0.9);
+  const badge = prog(t, 1.75, 0.45, BACK);
+  const glow = prog(t, 1.4, 0.6);
   return (
     <div
       style={{
@@ -15,22 +16,19 @@ function ShortCard() {
         height: 676,
         borderRadius: 36,
         position: "relative",
-        transform: `translateY(${(1 - s) * 80}px) scale(${0.85 + 0.15 * s}) rotate(${(1 - s) * -6}deg)`,
-        opacity: s,
+        transform: `translateY(${(1 - s) * 120}px) scale(${0.8 + 0.2 * s}) rotate(${(1 - s) * -8}deg)`,
+        opacity: Math.min(1, s * 3),
         background: "linear-gradient(160deg, #2a1b4f 0%, #120c24 45%, #070510 100%)",
         border: "1px solid rgba(255,255,255,0.12)",
-        boxShadow: `0 50px 120px rgba(0,0,0,0.8), 0 0 ${120 * glow}px rgba(139,92,246,${0.55 * glow})`,
+        boxShadow: `0 50px 120px rgba(0,0,0,0.8), 0 0 ${130 * glow}px rgba(139,92,246,${0.55 * glow})`,
         overflow: "hidden",
       }}
     >
-      {/* Faux video content: soft shapes */}
-      <div style={{ position: "absolute", left: -60, top: 120, width: 300, height: 300, borderRadius: 999, background: "radial-gradient(circle, rgba(167,139,250,0.55), transparent 70%)", transform: `translateY(${Math.sin(frame / 14) * 20}px)` }} />
-      <div style={{ position: "absolute", right: -80, top: 300, width: 340, height: 340, borderRadius: 999, background: "radial-gradient(circle, rgba(99,102,241,0.45), transparent 70%)", transform: `translateX(${Math.cos(frame / 18) * 20}px)` }} />
-      {/* Play glyph */}
+      <div style={{ position: "absolute", left: -60, top: 120, width: 300, height: 300, borderRadius: 999, background: "radial-gradient(circle, rgba(167,139,250,0.55), transparent 70%)", transform: `translateY(${Math.sin(t * 2) * 20}px)` }} />
+      <div style={{ position: "absolute", right: -80, top: 300, width: 340, height: 340, borderRadius: 999, background: "radial-gradient(circle, rgba(99,102,241,0.45), transparent 70%)", transform: `translateX(${Math.cos(t * 1.6) * 20}px)` }} />
       <div style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%,-50%)", width: 96, height: 96, borderRadius: 99, background: "rgba(255,255,255,0.14)", border: "1px solid rgba(255,255,255,0.25)", display: "grid", placeItems: "center" }}>
         <svg width="38" height="38" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#fff" /></svg>
       </div>
-      {/* Shorts chrome */}
       <div style={{ position: "absolute", left: 26, right: 26, bottom: 30, fontFamily: FONT.body, color: C.text }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 44, height: 44, borderRadius: 99, background: "linear-gradient(135deg,#a78bfa,#6366f1)" }} />
@@ -41,10 +39,9 @@ function ShortCard() {
         </div>
         <div style={{ marginTop: 16, fontSize: 21, lineHeight: 1.3, color: "rgba(255,255,255,0.9)" }}>I built a whole city in 60 seconds</div>
         <div style={{ marginTop: 14, height: 4, borderRadius: 9, background: "rgba(255,255,255,0.2)" }}>
-          <div style={{ width: `${interpolate(frame, [0, 180], [0, 100], clamp)}%`, height: 4, borderRadius: 9, background: "#fff" }} />
+          <div style={{ width: `${Math.min(100, t * 25)}%`, height: 4, borderRadius: 9, background: "#fff" }} />
         </div>
       </div>
-      {/* Outlier stamp */}
       <div
         style={{
           position: "absolute",
@@ -57,8 +54,8 @@ function ShortCard() {
           fontFamily: FONT.display,
           fontWeight: 800,
           fontSize: 30,
-          transform: `scale(${badge * 1}) rotate(${(1 - badge) * 20}deg)`,
-          opacity: Math.min(1, badge * 2),
+          transform: `scale(${badge}) rotate(${(1 - badge) * 25}deg)`,
+          opacity: badge > 0 ? 1 : 0,
           boxShadow: "0 10px 40px rgba(139,92,246,0.7)",
         }}
       >
@@ -68,41 +65,60 @@ function ShortCard() {
   );
 }
 
-export function Hook({ duration }: { duration: number }) {
-  const frame = useCurrentFrame();
-  const leftP = interpolate(frame, [10, 28], [0, 1], { ...clamp, easing: easeOut });
-  const rightP = interpolate(frame, [58, 76], [0, 1], { ...clamp, easing: easeOut });
-  const bottomP = interpolate(frame, [124, 140], [0, 1], { ...clamp, easing: easeOut });
+function Stat({ at, side, label, foot, children }: { at: number; side: "left" | "right"; label: string; foot: string; children: React.ReactNode }) {
+  const t = useTime();
+  const p = prog(t, at, 0.8, OUT);
+  const dir = side === "left" ? -1 : 1;
   return (
-    <Scene duration={duration} enter={1}>
+    <div
+      style={{
+        position: "absolute",
+        top: 385,
+        width: 520,
+        [side]: 150,
+        textAlign: side === "left" ? "right" : "left",
+        opacity: Math.min(1, p * 2.5),
+        transform: `translateX(${dir * (1 - p) * 120}px)`,
+      }}
+    >
+      <div style={{ fontFamily: FONT.body, fontSize: 30, color: C.textSecondary }}>{label}</div>
+      {children}
+      <div style={{ fontFamily: FONT.body, fontSize: 30, color: C.textSecondary }}>{foot}</div>
+    </div>
+  );
+}
+
+export function Hook({ dur }: { dur: number }) {
+  return (
+    <Shot
+      id="hook"
+      duration={dur}
+      enter="cut"
+      exit="left"
+      keys={[
+        { t: 0, x: 960, y: 560, z: 1.45 },
+        { t: 1.2, x: 960, y: 540, z: 1 },
+        { t: 4, z: 1.06 },
+      ]}
+    >
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
         <ShortCard />
       </AbsoluteFill>
-
-      {/* Left stat */}
-      <div style={{ position: "absolute", left: 150, top: 380, width: 520, textAlign: "right", opacity: leftP, transform: `translateX(${(1 - leftP) * -40}px)`, filter: `blur(${(1 - leftP) * 8}px)` }}>
-        <div style={{ fontFamily: FONT.body, fontSize: 30, color: C.textSecondary }}>This channel has</div>
-        <Title size={104}>
-          <Counter value={2140} start={12} dur={30} />
+      <Stat at={0.35} side="left" label="This channel has" foot="subscribers">
+        <Title size={108}>
+          <Counter value={2140} at={0.35} dur={0.7} />
         </Title>
-        <div style={{ fontFamily: FONT.body, fontSize: 30, color: C.textSecondary }}>subscribers</div>
-      </div>
-
-      {/* Right stat */}
-      <div style={{ position: "absolute", right: 150, top: 380, width: 520, opacity: rightP, transform: `translateX(${(1 - rightP) * 40}px)`, filter: `blur(${(1 - rightP) * 8}px)` }}>
-        <div style={{ fontFamily: FONT.body, fontSize: 30, color: C.textSecondary }}>Its latest Short got</div>
-        <Title size={104} style={GRADIENT_TEXT}>
-          <Counter value={4.1} start={62} dur={44} decimals={1} suffix="M" />
+      </Stat>
+      <Stat at={0.85} side="right" label="Its latest Short got" foot="views">
+        <Title size={108} style={GRADIENT_TEXT}>
+          <Counter value={4.1} at={0.85} dur={1.0} decimals={1} suffix="M" />
         </Title>
-        <div style={{ fontFamily: FONT.body, fontSize: 30, color: C.textSecondary }}>views</div>
-      </div>
-
-      {/* Payoff */}
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 70, textAlign: "center", opacity: bottomP }}>
-        <Title size={64}>
-          <Words text="That's an outlier." start={124} stagger={4} highlight={["outlier"]} />
+      </Stat>
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: 70, textAlign: "center" }}>
+        <Title size={68}>
+          <Words text="That's an outlier." at={2.2} stagger={0.06} highlight={["outlier"]} />
         </Title>
       </div>
-    </Scene>
+    </Shot>
   );
 }
