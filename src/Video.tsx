@@ -33,7 +33,7 @@ const SFX: [string, number, number][] = [
   // intro
   ["pop", 4 / 60, 0.3],
   ["whoosh", 22 / 60, 0.2],
-  ["typing", 42 / 60, 0.35],
+  ["typing", 50 / 60, 0.35],
   ["click", 114 / 60, 0.5],
   ["shimmer", 120 / 60, 0.3],
   ["whoosh", 170 / 60, 0.25],

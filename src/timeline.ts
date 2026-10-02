@@ -10,7 +10,7 @@ const order = [
   ["niche", 7.2], // Niche Finder: search "minecraft" → money, top niches, inside Mods
   ["viral", 3.3], // Viral Videos: four real Shorts with their multipliers
   ["analyze", 5.0], // Analyze Any Video: paste, click, 62×
-  ["script", 4.2], // Script Writer (Soon)
+  ["script", 4.8], // Script Writer: a mini script written out
   ["tracked", 3.2], // Track any Channel: Kopee
   ["tagline", 2.5], // Stop guessing. Find the outliers.
   ["end", 2.8], // logo + URL

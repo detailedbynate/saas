@@ -561,24 +561,25 @@ export function AnalyzeVideo({ dur }: SceneProps) {
   );
 }
 
-/* ------------------------------------------------------------------ Script Writer (marked "Soon", as in the app) */
+/* ------------------------------------------------------------------ Script Writer */
 
-const SCRIPT: [string, string][] = [
-  ["HOOK", "Your dog dies in one hit. Mine never will."],
-  ["BEATS", "Name tag. Armor. Then the one block that saves it."],
-  ["PAYOFF", "Do this once and you never lose a dog again."],
+// A mini script, written out as one piece of text (example copy for the kryvix Short).
+const SCRIPT = [
+  "Your dog dies in one hit. Mine never will.",
+  "First, a name tag, so it can never despawn.",
+  "Then wolf armor. That's six extra hearts.",
+  "Now the trick: put one block under its feet",
+  "and nothing can knock it into lava.",
+  "Do this once and you'll never lose a dog again.",
 ];
 
 export function ScriptWriter({ dur }: SceneProps) {
   const t = useT();
   const card: Box = { x: 330, y: 392, w: 1260, h: 500 };
   const T = { title: 0.05, card: 0.78, hand: 1.35, click: 2.0, write: 2.15 };
-  const soon = (
-    <span style={{ display: "inline-flex", alignItems: "center", height: 40, padding: "0 16px", borderRadius: 999, border: "1.5px solid rgba(252,211,77,0.7)", color: "#fcd34d", background: "rgba(252,211,77,0.1)", fontFamily: FONT.body, fontWeight: 700, fontSize: 20, letterSpacing: 0, marginLeft: 6 }}>Soon</span>
-  );
   return (
     <Stage t={t} dur={dur} push={1.45} amount={0.16} creep={0.05} origin={[960, 760]}>
-      <Title t={t} at={T.title} text="Script| Writer" icon={soon} yPushed={300} pushAt={T.card} />
+      <Title t={t} at={T.title} text="Script| Writer" icon={icon(Glyph.pen(30))} yPushed={300} pushAt={T.card} />
       <Bloom t={t} box={card} at={T.card} strength={0.75} />
       <Rise t={t} at={T.card} box={card} ring={0.7}>
         <Face>
@@ -596,19 +597,20 @@ export function ScriptWriter({ dur }: SceneProps) {
               Write script
             </Button>
           </div>
-          {/* right: the script arrives block by block */}
-          {SCRIPT.map(([tag, line], i) => {
-            const at = T.write + i * 0.42;
-            const k = p(t, at, 1.1);
-            return (
-              <div key={tag} style={{ position: "absolute", left: 424, right: 34, top: 34 + i * 148, height: 136, borderRadius: 18, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", opacity: Math.min(1, k * 2.5), transform: `translate(${(1 - k) * 40}px, 0px)` }}>
-                <div style={{ position: "absolute", left: 24, top: 18, color: ACCENT, fontFamily: FONT.body, fontWeight: 700, fontSize: 16, letterSpacing: "0.14em" }}>{tag}</div>
-                <div style={{ position: "absolute", left: 24, top: 52, right: 20, fontFamily: FONT.body, fontWeight: 500, fontSize: 30, color: C.text, letterSpacing: "-0.01em" }}>
-                  <Typing t={t} text={line} at={at + 0.15} cps={52} caret={false} />
-                </div>
-              </div>
-            );
-          })}
+          {/* right: the script is written out as one piece of text */}
+          <div style={{ position: "absolute", left: 424, right: 34, top: 34, bottom: 34, borderRadius: 18, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", opacity: p(t, T.write - 0.1, 0.5, SOFT) }}>
+            <div style={{ position: "absolute", left: 28, top: 20, ...label, fontSize: 17 }}>Script · 40 seconds</div>
+            <div style={{ position: "absolute", left: 28, right: 24, top: 60, fontFamily: FONT.body, fontWeight: 500, fontSize: 29, lineHeight: "58px", color: C.text, letterSpacing: "-0.01em" }}>
+              {SCRIPT.map((line, i) => {
+                const before = SCRIPT.slice(0, i).join("").length;
+                return (
+                  <div key={i} style={{ height: 58, whiteSpace: "nowrap" }}>
+                    <Typing t={t} text={line} at={T.write + before / 150} cps={150} caret={false} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </Face>
       </Rise>
       <Pointer t={t} at={T.hand} click={T.click} x={card.x + 210} y={card.y + card.h - 56} />
@@ -694,7 +696,7 @@ export function TrackedChannels({ dur }: SceneProps) {
       <Title
         t={t}
         at={T.title}
-        text="Track| any ~Channel"
+        text="Track| any Channel"
         icon={icon(Glyph.bell(30))}
         yPushed={250}
         pushAt={T.cards}
@@ -966,7 +968,7 @@ export function Tagline({ dur }: SceneProps) {
       <Title
         t={t}
         at={0.75}
-        text="Find the |~outliers."
+        text="Find the |outliers."
         y={622}
         size={118}
         lift={44}

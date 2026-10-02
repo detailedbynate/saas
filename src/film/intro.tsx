@@ -12,7 +12,8 @@ import { LogoMark } from "../components/kit";
  * pill opens into a library of Shorts, and the library folds into the one that broke out.
  * Each morph is a fast size/shape/colour change with the old content blurring out and the
  * new content blurring in; the camera starts tight on each new state and eases back; an
- * arrow cursor does the clicking.
+ * arrow cursor does the clicking. The shape and the camera ride closed-form springs (a sum of one
+ * spring per change), so nothing starts or stops abruptly and every frame stays a pure function of time.
  *
  *   f0    logo circle pops in
  *   f24   circle → search bar; "how to make a good youtube channel" is typed (34 characters a second)
@@ -33,6 +34,30 @@ const ramp = (f: number, a: number, b: number) => clamp01((f - a) / (b - a));
 const inOut = Easing.bezier(0.65, 0, 0.35, 1);
 const out = Easing.bezier(0.16, 1, 0.3, 1);
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
+
+/**
+ * A spring's response to being told "go from 0 to 1" at time 0, in closed form, so it is a pure
+ * function of time. `w` is its speed (rad/s); `z` is damping: 1 = no overshoot, 0.8 = a tiny one.
+ */
+function step(seconds: number, w: number, z = 1) {
+  if (seconds <= 0) return 0;
+  if (z >= 1) return 1 - Math.exp(-w * seconds) * (1 + w * seconds);
+  const wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * seconds) * (Math.cos(wd * seconds) + ((z * w) / wd) * Math.sin(wd * seconds));
+}
+/**
+ * A value that is retargeted several times: the sum of one spring per change. It never jumps and
+ * never has a kink, however close together the changes are. `changes` is [frame, target].
+ */
+function sprung(f: number, start: number, changes: readonly (readonly [number, number])[], w: number, z = 1) {
+  let v = start;
+  let prev = start;
+  for (const [at, target] of changes) {
+    v += (target - prev) * step((f - at) / 60, w, z);
+    prev = target;
+  }
+  return v;
+}
 const mix = (a: number[], b: number[], k: number) => `rgb(${a.map((v, i) => Math.round(lerp(v, b[i], k))).join(",")})`;
 
 const INK = "#111118";
@@ -82,34 +107,25 @@ const S: State[] = [
 ];
 /** When each morph runs: [from state, start frame, end frame]. */
 const MORPHS: [number, number, number][] = [
-  [0, 24, 38],
-  [1, 116, 130],
-  [2, 172, 190],
-  [3, 270, 288],
+  [0, 24, 50],
+  [1, 116, 142],
+  [2, 172, 204],
+  [3, 270, 300],
 ];
-const T = { type: 42, cps: 34, send: 114, flag: 232, pick: 268, analyze: 338, out: 398 };
+const T = { type: 50, cps: 36, send: 114, flag: 232, pick: 268, analyze: 338, out: 398 };
 const QUERY = "how to make a good youtube channel";
 
-/** Which state we are in and how far into the morph to the next one (eased 0–1). */
-function phase(f: number) {
-  let state = 0;
-  let k = 0;
-  for (const [from, a, b] of MORPHS) {
-    if (f >= b) state = from + 1;
-    else if (f >= a) {
-      state = from;
-      k = inOut(ramp(f, a, b));
-    }
-  }
-  return { state, k };
-}
+// The shape itself rides springs: width leads, height trails a little, so it opens wide before it
+// opens tall; each has a tiny overshoot. Colour and corner radius follow without overshoot.
+const shape = (f: number, key: "w" | "h" | "r", w: number, z: number) => sprung(f, S[0][key], MORPHS.map(([from, at]) => [at, S[from + 1][key]] as const), w, z);
+const tint = (f: number, channel: number) => sprung(f, S[0].bg[channel], MORPHS.map(([from, at]) => [at, S[from + 1].bg[channel]] as const), 16, 1);
 
 /** Content of one state: blurs out during the first part of the morph away from it, blurs in during the last part of the morph into it. */
 function Content({ f, index, children }: { f: number; index: number; children: ReactNode }) {
   const into = MORPHS.find(([from]) => from + 1 === index);
   const away = MORPHS.find(([from]) => from === index);
-  const a = into ? ramp(f, lerp(into[1], into[2], 0.45), into[2] + 5) : 1;
-  const b = away ? ramp(f, away[1], lerp(away[1], away[2], 0.5)) : 0;
+  const a = into ? ramp(f, into[1] + 7, into[1] + 22) : 1;
+  const b = away ? ramp(f, away[1], away[1] + 9) : 0;
   const vis = a * (1 - b);
   if (vis <= 0.001) return null;
   const blur = (1 - a) * 14 + b * 14;
@@ -172,7 +188,7 @@ function Library({ f }: { f: number }) {
       {LIBRARY.map((clip, i) => {
         const col = i % 5;
         const row = Math.floor(i / 5);
-        const focus = ramp(f, 182 + i * 1.5, 204 + i * 1.5); // the grid comes into focus tile by tile
+        const focus = ramp(f, 186 + i * 1.5, 214 + i * 1.5); // the grid comes into focus tile by tile
         const star = i === STAR;
         return (
           <div key={clip} style={{ position: "absolute", left: 36 + col * (w + 16), top: 86 + row * (h + 16), width: w, height: h, borderRadius: 16, overflow: "hidden", background: "#e9e9ef", filter: focus < 1 ? `blur(${(1 - focus) * 12}px)` : undefined, opacity: star ? 1 : 1 - 0.45 * flag, outline: star ? `${5 * flag}px solid ${VIOLET}` : undefined, outlineOffset: 2 }}>
@@ -250,38 +266,30 @@ function Cursor({ f }: { f: number }) {
   );
 }
 
-/** Camera zoom: tight on each new state, easing back, with a slow push while things hold. [frame, zoom] */
+/**
+ * Camera zoom, as a sum of soft springs (no overshoot), so it never changes direction abruptly:
+ * a little closer as each new state opens, then a long ease back while it is read. [frame, zoom]
+ */
 const CAMERA: [number, number][] = [
-  [0, 1.5],
-  [24, 1.6],
-  [40, 1.75],
-  [112, 1.12],
-  [130, 1.2],
-  [172, 1.36],
-  [190, 1.55],
-  [256, 1.0],
-  [270, 1.02],
-  [288, 1.16],
-  [345, 1.0],
-  [420, 1.06],
+  [20, 1.72],
+  [50, 1.14],
+  [116, 1.3],
+  [172, 1.3],
+  [196, 1.0],
+  [270, 1.14],
+  [300, 1.02],
 ];
 function zoomAt(f: number) {
-  let i = 0;
-  while (i < CAMERA.length - 2 && f > CAMERA[i + 1][0]) i++;
-  const [f0, z0] = CAMERA[i];
-  const [f1, z1] = CAMERA[i + 1];
-  // zoom-outs ease out (fast then settling); pushes and morph kicks ease in-out
-  const k = z1 < z0 ? Easing.out(Easing.cubic)(ramp(f, f0, f1)) : inOut(ramp(f, f0, f1));
-  return lerp(z0, z1, k);
+  return sprung(f, 1.5, CAMERA, 5.2, 1) + 0.0002 * f;
 }
 
 /* ------------------------------------------------------------------ the intro */
 
 export function Intro() {
   const f = useCurrentFrame();
-  const { state, k } = phase(f);
-  const a = S[state];
-  const b = S[Math.min(S.length - 1, state + 1)];
+  const w = Math.max(1, shape(f, "w", 15, 0.82));
+  const h = Math.max(1, shape(f, "h", 12, 0.86));
+  const r = Math.max(0, shape(f, "r", 13, 1));
   const pop = out(ramp(f, 2, 20)); // the circle pops in
   const leave = ramp(f, T.out, INTRO_FRAMES); // the blur hand-off into the first feature scene
   const zoom = zoomAt(f) * (1 + 0.08 * leave);
@@ -291,12 +299,12 @@ export function Intro() {
         <div
           style={{
             position: "absolute",
-            left: 960 - lerp(a.w, b.w, k) / 2,
-            top: 540 - lerp(a.h, b.h, k) / 2,
-            width: lerp(a.w, b.w, k),
-            height: lerp(a.h, b.h, k),
-            borderRadius: lerp(a.r, b.r, k),
-            background: mix(a.bg, b.bg, k),
+            left: 960 - w / 2,
+            top: 540 - h / 2,
+            width: w,
+            height: h,
+            borderRadius: Math.min(r, h / 2),
+            background: `rgb(${[0, 1, 2].map((c) => Math.round(Math.max(0, Math.min(255, tint(f, c))))).join(",")})`,
             boxShadow: "0 30px 80px rgba(12,6,70,0.38), 0 4px 14px rgba(12,6,70,0.2)",
             overflow: "hidden",
             opacity: Math.min(1, pop * 2),

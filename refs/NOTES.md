@@ -293,3 +293,11 @@ starts tight on each new state and eases back, and an arrow cursor does the clic
 Outlier version (`src/film/intro.tsx`, f0–f419): logo circle → "how to make a good youtube channel"
 → "Researching 105 channels" → "Viral Shorts · 1.3K videos analysed" with the 62× Short flagged →
 that Short's card, "Analyze video" clicked → blur hand-off into Niche Finder at 7.0 s.
+
+## v14: spring-driven intro morphs; Script Writer as one script (35.8s)
+
+- Intro shape (width, height, radius, colour) and camera now ride closed-form springs, summed per
+  change (`step` / `sprung` in `src/film/intro.tsx`): width leads height, tiny overshoot, no kinks.
+  Morphs take ~0.45–0.5 s instead of ~0.25 s; the camera no longer kicks in as the library opens.
+- Removed the decoding ("scramble") words and the "Soon" tag. Script Writer writes one mini script
+  into a single text area instead of HOOK / BEATS / PAYOFF blocks; scene lengthened to 4.8 s.
