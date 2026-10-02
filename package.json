@@ -6,7 +6,8 @@
     "studio": "remotion studio",
     "render": "remotion render OutlierLaunch out/outlier-launch-draft.mp4 --props=./props/draft.json --gl=angle",
     "render:final": "remotion render OutlierLaunch out/outlier-launch.mp4 --props=./props/final.json --gl=angle",
-    "audio": "python3 scripts/make_audio.py"
+    "audio": "python3 scripts/make_audio.py",
+    "scene": "remotion render SceneTest out/scene-test.mp4 --gl=angle"
   },
   "dependencies": {
     "@fontsource/dm-sans": "5.3.0",
