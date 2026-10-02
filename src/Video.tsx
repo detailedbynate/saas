@@ -3,7 +3,7 @@ import { type ComponentType, useEffect, useState } from "react";
 import { SmoothMotionBlur } from "./components/blur";
 import { Finish } from "./components/fx";
 import { Bands } from "./film/kit";
-import { AnalyzeVideo, Dashboard, End, NicheFinder, Prompt, Scan, Tagline, TrackedChannels, ViralVideos } from "./film/scenes";
+import { AnalyzeVideo, Dashboard, End, Hook, Intro, NicheFinder, Tagline, TrackedChannels, ViralVideos } from "./film/scenes";
 import { fontsReady } from "./theme";
 import { FPS, SHOTS, type SceneId, TOTAL_FRAMES } from "./timeline";
 
@@ -12,14 +12,14 @@ const f = (sec: number) => Math.round(sec * FPS);
 
 /** Every scene after the first starts this long before the previous one ends, so its first words are already arriving as the old scene leaves. */
 const OVERLAP = 0.2;
-const lead = (id: SceneId) => (id === "prompt" ? 0 : OVERLAP);
+const lead = (id: SceneId) => (id === "hook" ? 0 : OVERLAP);
 /** When a scene's own clock starts, in film seconds. */
 const start = (id: SceneId) => S[id].at - lead(id);
 const length = (id: SceneId) => S[id].dur + lead(id);
 
 const SCENES: [SceneId, ComponentType<{ dur: number }>][] = [
-  ["prompt", Prompt],
-  ["scan", Scan],
+  ["hook", Hook],
+  ["intro", Intro],
   ["niche", NicheFinder],
   ["viral", ViralVideos],
   ["analyze", AnalyzeVideo],
@@ -32,9 +32,14 @@ const SCENES: [SceneId, ComponentType<{ dur: number }>][] = [
 /** Sound effects: [file, seconds, volume]. A soft whoosh into each scene, clicks on the clicks, a hit on the end card. */
 const SFX: [string, number, number][] = [
   ...SCENES.slice(1).map(([id]): [string, number, number] => ["whoosh", start(id) - 0.1, 0.25]),
-  ["typing", start("prompt") + 0.6, 0.35],
-  ["click", start("prompt") + 2.15, 0.5],
-  ["ticker", start("niche") + 1.05, 0.22],
+  ["typing", start("hook") + 0.2, 0.35],
+  ["pop", start("hook") + 1.55, 0.3],
+  ["shimmer", start("hook") + 2.1, 0.35],
+  ["typing", start("hook") + 2.6, 0.3],
+  ["subhit", start("intro") + 0.85, 0.7],
+  ["shimmer", start("intro") + 0.9, 0.4],
+  ["click", start("niche") + 1.95, 0.5],
+  ["click", start("niche") + 3.75, 0.5],
   ...[0, 1, 2, 3].map((i): [string, number, number] => ["pop", start("viral") + 1.5 + i * 0.12, 0.25]),
   ["typing", start("analyze") + 1.9, 0.35],
   ["click", start("analyze") + 3.25, 0.5],

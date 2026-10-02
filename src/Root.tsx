@@ -18,7 +18,7 @@ export function Root() {
         width={1920}
         height={1080}
         defaultProps={scene}
-        calculateMetadata={({ props }) => ({ durationInFrames: Math.round((SHOTS[props.scene].dur + (props.scene === "prompt" ? 0 : 0.2)) * FPS) })}
+        calculateMetadata={({ props }) => ({ durationInFrames: Math.round((SHOTS[props.scene].dur + (props.scene === "hook" ? 0 : 0.2)) * FPS) })}
       />
     </>
   );

@@ -228,3 +228,23 @@ Channels → dashboard (real screenshot) → tagline → end card.
 Motion blur: `SmoothMotionBlur` (`src/components/blur.tsx`), 120° shutter. Do not use
 `<HtmlInCanvasMotionBlur>`: its captured samples render faint semi-transparent glows brighter
 and hard-edged (worse with each sample). Glows are gradients (`GlowRect`), not wide box-shadows.
+
+## v9: original structure, moves from all references (31.5s)
+
+Client: liked the v8 look but it tracked Algrow too closely; wants originality using only
+moves that appear in the references, especially the bottom-right clip of the isaacedits
+showreel (`refs/src/isaac.mp4`, a 2×2 grid; bottom-right cropped for study).
+
+Moves taken from that clip (all in `src/film/kit.tsx`):
+- typed headline, a phrase lights up in a gradient ("selected"), is swapped for a new word
+  inside a selection box with corner handles, then typing continues → **Hook**
+- "Introducing|" typed, then the big name lands above it with guide lines and sparkles → **Intro**
+- big zoom into a small control, arrow cursor, dropdown unrolling row by row, hover walking
+  down the list → **Niche Finder**
+- word decoding from scrambled glyphs (accent colour, then white) → **Track any Channel**, **tagline**
+- characters arriving one by one with a glow that dies away ("$497") → **+38M**, **79×**, **Outlier**
+- light streaks sweeping across → **Viral Videos**, **tagline**
+- four-point sparkles → intro, tracked, end
+
+Kept from v8 (Algrow-derived, client-approved): long-blur word reveals, graph-curve entrances,
+tilted card rise that pushes the title, never-ending camera push, overlapped hand-offs.
