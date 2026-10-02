@@ -148,7 +148,7 @@ for r in s3['rows']:
     v=r['v']
     if v<289 or v>336: continue
     c=r['Colors']; bo=r['Bounce']; m=r['Mix']; t=r['Typewriter']; sn=r['Snapping']
-    rows.append([f'f{v}', f"{c[4]}%" if c else '–', bo[1] if bo and bo[5]>100 else ('(fading in) %d'%bo[1] if bo else '–'), f'{m[0]}–{m[2]}' if m else '–', t[2] if t and t[2]-t[0]<420 else '–', f'{sn[0]}–{sn[2]}' if sn and sn[2]-sn[0]<400 and sn[1]>590 else '–'])
+    rows.append([f'f{v}', f"{c[4]}%" if c else '–', bo[1] if bo and bo[5]>100 else ('(fading in) %d'%bo[1] if bo else '–'), f'{m[0]}–{m[2]}' if m else '–', t[2] if t and t[2]-t[0]<420 and not (v<300 and t[2]>700) else '–', f'{sn[0]}–{sn[2]}' if sn and sn[2]-sn[0]<400 and sn[1]>590 else '–'])
 tbl(['frame','Colors: % of letters still blue','Bounce: top edge y','Mix: x0–x1','Typewriter: right edge x','Snapping: x0–x1'],rows)
 w('''- **Colors** (x 352–576, y 416–475): on screen from f289, all blue (`#4098e7`), fading up to full brightness by f295. Then it turns white **one letter at a time, left to right**: steps at f293, f298, f304, f310, f316, f322 (one letter every ≈ 6 frames).
 - **Bounce** (x 830–1091): fades in from f293 while rising from y=490 at a steady ≈ 6 px/frame, reaches y=403 at f311–f312 (**15 px above** its rest), then eases down to rest at 418 by ≈ f333.
