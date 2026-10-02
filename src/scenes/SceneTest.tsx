@@ -18,7 +18,7 @@ import { Glyph, HandIcon, IconTile, LILAC, LogoMark, Spinner, VIOLET } from "../
  *   1.77  typing starts; 2.95 click; spinner
  */
 
-export const SCENE_TEST_SECONDS = 4.6;
+export const SCENE_TEST_SECONDS = 4.2;
 
 const GLIDE = AE_GRAPH_GLIDE;
 /** The card/title rise: a soft start, then a long settle (fitted to the reference: 27% at 0.1s, 57% at 0.2s, 74% at 0.3s). */
@@ -34,7 +34,8 @@ const TITLE_Y1 = 564; // after its own rise
 const TITLE_Y2 = 354; // after the card pushes it up
 const ORIGIN = { x: 960, y: 800 }; // the push-in zooms about this point
 
-const T = { words: 0.15, icon: 0.95, card: 1.25, push: 1.9, type: 2.35, hand: 2.9, click: 3.7 };
+// The card leaves while the title is still gliding, so the motion never comes to rest between the two.
+const T = { words: 0.15, icon: 0.6, card: 0.78, push: 1.45, type: 1.9, hand: 2.45, click: 3.25 };
 
 function Bands({ t }: { t: number }) {
   const band = (x: number, w: number, rot: number, a: number, v: number, i: number): CSSProperties => ({
