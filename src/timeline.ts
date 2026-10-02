@@ -8,11 +8,11 @@ export const FPS = 60;
 const order = [
   ["hook", 3.9], // "Find trending Shorts" → selected → "Find outliers before they blow up"
   ["intro", 2.7], // Introducing → Outlier
-  ["niche", 4.7], // Niche Finder: zoom into the dropdown
-  ["viral", 3.3], // Viral Videos: four Shorts with their multipliers
-  ["analyze", 5.2], // Analyze Any Video: paste, click, 79×
-  ["tracked", 3.4], // Track any Channel: three stat cards
-  ["dash", 3.0], // the real dashboard
+  ["niche", 7.2], // Niche Finder: search "minecraft" → money, top niches, inside Mods
+  ["viral", 3.3], // Viral Videos: four real Shorts with their multipliers
+  ["analyze", 5.0], // Analyze Any Video: paste, click, 62×
+  ["script", 4.2], // Script Writer (Soon)
+  ["tracked", 3.2], // Track any Channel: Kopee
   ["tagline", 2.5], // Stop guessing. Find the outliers.
   ["end", 2.8], // logo + URL
 ] as const;

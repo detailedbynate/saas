@@ -3,7 +3,7 @@ import { type ComponentType, useEffect, useState } from "react";
 import { SmoothMotionBlur } from "./components/blur";
 import { Finish } from "./components/fx";
 import { Bands } from "./film/kit";
-import { AnalyzeVideo, Dashboard, End, Hook, Intro, NicheFinder, Tagline, TrackedChannels, ViralVideos } from "./film/scenes";
+import { AnalyzeVideo, End, Hook, Intro, NicheFinder, ScriptWriter, Tagline, TrackedChannels, ViralVideos } from "./film/scenes";
 import { fontsReady } from "./theme";
 import { FPS, SHOTS, type SceneId, TOTAL_FRAMES } from "./timeline";
 
@@ -23,8 +23,8 @@ const SCENES: [SceneId, ComponentType<{ dur: number }>][] = [
   ["niche", NicheFinder],
   ["viral", ViralVideos],
   ["analyze", AnalyzeVideo],
+  ["script", ScriptWriter],
   ["tracked", TrackedChannels],
-  ["dash", Dashboard],
   ["tagline", Tagline],
   ["end", End],
 ];
@@ -33,13 +33,18 @@ const SCENES: [SceneId, ComponentType<{ dur: number }>][] = [
 const SFX: [string, number, number][] = [
   ...SCENES.slice(1).map(([id]): [string, number, number] => ["whoosh", start(id) - 0.1, 0.25]),
   ["typing", start("hook") + 0.2, 0.35],
-  ["pop", start("hook") + 1.55, 0.3],
-  ["shimmer", start("hook") + 2.1, 0.35],
-  ["typing", start("hook") + 2.6, 0.3],
+  ["pop", start("hook") + 2.05, 0.3],
+  ["shimmer", start("hook") + 2.3, 0.35],
+  ["typing", start("hook") + 2.85, 0.3],
   ["subhit", start("intro") + 0.85, 0.7],
   ["shimmer", start("intro") + 0.9, 0.4],
-  ["click", start("niche") + 1.95, 0.5],
-  ["click", start("niche") + 3.75, 0.5],
+  ["typing", start("niche") + 1.35, 0.3],
+  ["click", start("niche") + 2.45, 0.5],
+  ...[0, 1, 2].map((i): [string, number, number] => ["pop", start("niche") + 2.8 + i * 0.09, 0.22]),
+  ["click", start("niche") + 5.05, 0.5],
+  ["ding", start("niche") + 5.4, 0.3],
+  ["click", start("script") + 2.0, 0.5],
+  ["typing", start("script") + 2.3, 0.3],
   ...[0, 1, 2, 3].map((i): [string, number, number] => ["pop", start("viral") + 1.5 + i * 0.12, 0.25]),
   ["typing", start("analyze") + 1.9, 0.35],
   ["click", start("analyze") + 3.25, 0.5],

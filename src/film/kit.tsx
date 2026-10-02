@@ -124,21 +124,36 @@ export function Title({ t, at = 0.05, text, icon, x = 960, y = 564, yPushed, pus
   );
 }
 
-/** Typing: each new character fades in over a couple of keystrokes; a caret blinks once it stops. */
-export function Typing({ t, text, at, cps = 22, caret = true }: { t: number; text: string; at: number; cps?: number; caret?: boolean }) {
-  const n = (t - at) * cps;
+/**
+ * Fluid typing. The whole string is laid out from the start (so a centred line never shifts as it
+ * grows); each character then resolves out of a small blur and rise, and the caret glides
+ * continuously instead of hopping a character at a time.
+ */
+export function Typing({ t, text, at, cps = 22, caret = true, hold = 1.2 }: { t: number; text: string; at: number; cps?: number; caret?: boolean; hold?: number }) {
+  const n = Math.max(0, Math.min(text.length, (t - at) * cps));
+  const full = Math.floor(n);
+  const frac = n - full;
+  const done = n >= text.length;
   const blink = Math.floor(t * 2.4) % 2 === 0;
+  const showCaret = caret && t >= at - 0.15 && (!done || t < at + text.length / cps + hold || blink);
   return (
-    <span style={{ whiteSpace: "pre" }}>
+    <span style={{ position: "relative", display: "inline-block", whiteSpace: "pre" }}>
       {text.split("").map((ch, i) => {
-        const k = Math.max(0, Math.min(1, (n - i) / 2.5));
-        return k <= 0 ? null : (
-          <span key={i} style={{ opacity: k }}>
+        const k = p(t, at + i / cps, 0.32, SOFT);
+        return (
+          <span key={i} style={{ display: "inline-block", opacity: k, filter: k > 0 && k < 0.995 ? `blur(${(1 - k) * 7}px)` : undefined, transform: `translate(0px, ${(1 - k) * 0.14}em)` }}>
             {ch}
           </span>
         );
       })}
-      {caret && (n < text.length + 2 || blink) ? <span style={{ opacity: 0.75, fontWeight: 400 }}>|</span> : null}
+      {showCaret ? (
+        <span style={{ position: "absolute", left: 0, top: 0, whiteSpace: "pre" }}>
+          <span style={{ visibility: "hidden" }}>{text.slice(0, full)}</span>
+          {/* a fraction of the next character's width: its advance scales with its font size */}
+          <span style={{ visibility: "hidden", fontSize: `${frac}em` }}>{text[full] ?? ""}</span>
+          <span style={{ position: "absolute", opacity: 0.8, fontWeight: 300, marginLeft: "0.02em" }}>|</span>
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -301,21 +316,34 @@ export function Bands({ cuts = [] }: { cuts?: number[] }) {
  * and the big zoom into a small control with a dropdown unrolling under an arrow cursor.
  * ==================================================================================== */
 
-const GLYPHS = "A9e&t%6@n#{G+4$Kx7?Zq";
+const GLYPHS = "a9e&t%6@n#o+4$kx7?zq";
 
-/** A word that decodes: each character flickers through random glyphs (in the accent colour) until its turn to resolve. */
-export function Scramble({ t, at, text, dur = 0.9, color = C.text, accent = "#a78bfa" }: { t: number; at: number; text: string; dur?: number; color?: string; accent?: string }) {
-  const frame = Math.floor(t * 20); // glyphs change 20×/s
-  const done = p(t, at + dur, 0.35, SOFT);
+/**
+ * A word that decodes: each character flickers through random glyphs (in the accent colour) until
+ * its turn to resolve. Every slot keeps the width of its final character, so the line never jitters,
+ * and each glyph cross-fades into the next.
+ */
+export function Scramble({ t, at, text, dur = 1.0, color = C.text, accent = "#a78bfa" }: { t: number; at: number; text: string; dur?: number; color?: string; accent?: string }) {
+  const rate = 11; // glyph changes per second
+  const u = Math.max(0, t - at) * rate;
+  const step = Math.floor(u);
+  const mix = u - step;
+  const settle = p(t, at + dur, 0.5, SOFT);
+  const glyph = (i: number, s: number) => GLYPHS[(i * 7 + s * 3 + ((s * (i + 3)) % 5)) % GLYPHS.length];
   return (
-    <span style={{ whiteSpace: "pre" }}>
+    <span style={{ whiteSpace: "pre", opacity: t < at ? 0 : 1 }}>
       {text.split("").map((ch, i) => {
         const resolveAt = at + (dur * (i + 1)) / text.length;
-        const fixed = t >= resolveAt || ch === " ";
-        const g = GLYPHS[(i * 7 + frame * 3 + ((frame * (i + 3)) % 5)) % GLYPHS.length];
+        const r = ch === " " ? 1 : p(t, resolveAt, 0.22, SOFT);
         return (
-          <span key={i} style={{ color: done >= 1 ? color : accent, opacity: t < at ? 0 : 1 }}>
-            {fixed ? ch : g}
+          <span key={i} style={{ position: "relative", display: "inline-block" }}>
+            <span style={{ opacity: r, color: settle >= 1 ? color : accent }}>{ch}</span>
+            {r < 1 ? (
+              <>
+                <span style={{ position: "absolute", left: 0, right: 0, top: 0, textAlign: "center", color: accent, opacity: (1 - r) * (1 - mix) }}>{glyph(i, step)}</span>
+                <span style={{ position: "absolute", left: 0, right: 0, top: 0, textAlign: "center", color: accent, opacity: (1 - r) * mix }}>{glyph(i, step + 1)}</span>
+              </>
+            ) : null}
           </span>
         );
       })}

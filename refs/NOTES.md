@@ -248,3 +248,19 @@ Moves taken from that clip (all in `src/film/kit.tsx`):
 
 Kept from v8 (Algrow-derived, client-approved): long-blur word reveals, graph-curve entrances,
 tilted card rise that pushes the title, never-ending camera push, overlapped hand-offs.
+
+## v10: fluid typing, real figures, Script Writer (34.8s)
+
+- Typing is now fluid (`Typing` in `src/film/kit.tsx`): the full string is laid out from the
+  start (no re-centring), characters resolve from a small blur/rise, and the caret glides
+  continuously (a hidden next character at fractional font size gives fractional advance).
+- Hook swap: selection wipes across the phrase, the old phrase rolls up and out, the new
+  word rolls in a beat later, the slot closes up smoothly, the stage pans to stay centred.
+- Decoded words keep fixed-width slots and cross-fade glyphs (no line jitter).
+- All figures now come from the client's own app recording (`public/footage/app-*.png`,
+  Minecraft report): money ranges, top 3 niches (Mods 64, Lifesteal SMP 58, Hardcore 53),
+  Mods stats, the four "Uploads in this niche" Shorts (thumbnails cropped to `mc-*.jpg`) with
+  their multipliers, GalaxiHD 62× for Analyze, Kopee (127.2K/h, best 119×) for tracking.
+- Niche Finder is now search → report (money tiles, top niches, inside Mods with the ring).
+- Script Writer scene added, tagged "Soon" as in the app. Its three script lines are
+  illustrative copy, not app output. Dashboard scene dropped to stay under 35s.
