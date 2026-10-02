@@ -281,3 +281,15 @@ the end of `SPEC.md`. Everything after 7 s is unchanged from v10.
 - The supplied gradient (pushed toward purple, slowly moving, no outlined words) is now the stage
   for the whole film (`GradientStage` in `src/film/intro.tsx`); `Bands` is no longer used.
   Title accent colour changed to pale lilac and sparkles to white so they read on it; vignette reduced.
+
+## v13: morphing search-bar intro (35.2s)
+
+Reference: AnnaCher___'s Sprites promo (`refs/src/anna.mp4`), 2.0–6.0 s. One centred object keeps
+morphing: circle → search bar (typed at ~34 characters a second) → dark "researching" pill with a
+spinner → library grid that comes into focus → single card with a button that changes colour when
+clicked. Each morph takes ~0.15–0.3 s, old content blurs out and new content blurs in, the camera
+starts tight on each new state and eases back, and an arrow cursor does the clicking.
+
+Outlier version (`src/film/intro.tsx`, f0–f419): logo circle → "how to make a good youtube channel"
+→ "Researching 105 channels" → "Viral Shorts · 1.3K videos analysed" with the 62× Short flagged →
+that Short's card, "Analyze video" clicked → blur hand-off into Niche Finder at 7.0 s.

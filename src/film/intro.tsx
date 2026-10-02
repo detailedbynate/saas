@@ -1,20 +1,27 @@
 import type { CSSProperties, ReactNode } from "react";
-import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Easing, Img, staticFile, useCurrentFrame } from "remotion";
 import { FONT } from "../theme";
 import { LogoMark } from "../components/kit";
-import { REF } from "./introData";
 
 /*
- * The intro (f0–f419, 7.0 s): an original Outlier opening built from the text animations
- * measured in SPEC.md (word drop with overshoot, the spring lift, typing inside a text box
- * with highlighted new letters, the icon pop, snapping letters, colour wipe, bounce, mix,
- * typewriter, and boiling hand-drawn marks). The structure and words are Outlier's own.
+ * The intro (f0–f419, 7.0 s).
  *
- *   Hook      f0–f150    "Find outliers" drops in and lifts; "before they blow up" types in under it
- *   Name      f138–f289  Introducing → logo pops → "Outlier" snaps in → subtitle colour-wipes
- *   Features  f275–f419  five feature buttons, each label arriving a different way
+ * One object in the middle of the frame keeps morphing into the next thing, the way the
+ * Sprites promo does between 2 s and 6 s (refs/src/anna.mp4): a circle opens into a search
+ * bar, the query is typed and sent, the bar collapses into a dark "researching" pill, the
+ * pill opens into a library of Shorts, and the library folds into the one that broke out.
+ * Each morph is a fast size/shape/colour change with the old content blurring out and the
+ * new content blurring in; the camera starts tight on each new state and eases back; an
+ * arrow cursor does the clicking.
  *
- * Every frame is a pure function of the frame number (the scribble "boil" is seeded by frame / 8).
+ *   f0    logo circle pops in
+ *   f24   circle → search bar; "how to make a good youtube channel" is typed (34 characters a second)
+ *   f114  send is clicked; bar → "Researching 105 channels" pill
+ *   f172  pill → "Viral Shorts" library; one Short is flagged as the outlier
+ *   f268  it is clicked; library → that Short's card; "Analyze video" is clicked at f338
+ *   f398  everything blurs away into the first feature scene
+ *
+ * Every frame is a pure function of the frame number.
  */
 
 export const INTRO_FRAMES = 420;
@@ -22,34 +29,21 @@ export const INTRO_FRAMES = 420;
 /* ------------------------------------------------------------------ helpers */
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
-/** 0→1 linearly from frame a to frame b. */
 const ramp = (f: number, a: number, b: number) => clamp01((f - a) / (b - a));
-const easeOut = (n: number) => 1 - (1 - n) ** 3;
-/** Value from an array that starts at frame `start` (held at both ends). */
-const from = (arr: readonly (number | null)[], start: number, f: number) => arr[Math.max(0, Math.min(arr.length - 1, f - start))] ?? 0;
-/** Value from a [frame, value] table, linearly interpolated, held at both ends. */
-function table(rows: readonly (readonly number[])[], f: number, col = 1) {
-  if (f <= rows[0][0]) return rows[0][col];
-  for (let i = 1; i < rows.length; i++) {
-    if (f <= rows[i][0]) {
-      const [f0, f1] = [rows[i - 1][0], rows[i][0]];
-      return rows[i - 1][col] + ((rows[i][col] - rows[i - 1][col]) * (f - f0)) / (f1 - f0);
-    }
-  }
-  return rows[rows.length - 1][col];
-}
+const inOut = Easing.bezier(0.65, 0, 0.35, 1);
+const out = Easing.bezier(0.16, 1, 0.3, 1);
+const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
+const mix = (a: number[], b: number[], k: number) => `rgb(${a.map((v, i) => Math.round(lerp(v, b[i], k))).join(",")})`;
 
-const WHITE = "#ffffff";
-const INK = "#0b0930"; // shot 2's "black" on the light stage
-const POP = "#7a4dff"; // the reference's blue highlight, in Outlier violet
-const SKY = "#9fd8ff"; // the reference's "Colors" blue on the dark stage
+const INK = "#111118";
+const GREY = "#7a7a86";
+const VIOLET = "#7a4dff";
 
 /* ------------------------------------------------------------------ background */
 
 /**
- * The stage: the client's gradient (azure top-left, pale top-right, pale bottom-left, deep
- * bottom-right), pushed slightly toward purple, with every pool of colour drifting slowly.
- * `light` (0–1) follows the reference's dissolves: 0 on the dark shots, 1 on the light one.
+ * The stage for the whole film: the client's gradient (azure top-left, pale top-right, pale
+ * bottom-left, deep bottom-right), pushed slightly toward purple, every pool of colour drifting.
  */
 export function GradientStage({ f, light }: { f: number; light: number }) {
   const t = f / 60;
@@ -71,267 +65,264 @@ export function GradientStage({ f, light }: { f: number; light: number }) {
   );
 }
 
-/* ------------------------------------------------------------------ beat 1: the hook */
-
-const fade: CSSProperties = { WebkitMaskImage: "linear-gradient(to bottom, #000 30%, rgba(0,0,0,0.3) 92%)", maskImage: "linear-gradient(to bottom, #000 30%, rgba(0,0,0,0.3) 92%)" };
-
-/** The reference's word drop: falls in from above, a few px past its rest, and eases back. Returns the y offset. */
-function drop(f: number, start: number, travel = 1.5) {
-  if (f < start) return 0;
-  const i = f - start;
-  if (i <= 8) return (from(REF.cleanY, 105, 105 + i) - 482) * travel;
-  return 4 * travel * (1 - ramp(i, 8, 17));
+/** The stage stays deep for the whole intro. */
+export function introLight(_f: number) {
+  return 0;
 }
 
-/** A hand-drawn stroke that draws on between two frames. */
-function Stroke({ f, d, start, end, width, color, head = false }: { f: number; d: string; start: number; end: number; width: number; color: string; head?: boolean }) {
-  const k = ramp(f, start, end);
-  if (k <= 0) return null;
-  return <path d={d} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={head ? 1 - easeOut(k) : 1 - k} />;
+/* ------------------------------------------------------------------ the morphing object */
+
+type State = { w: number; h: number; r: number; bg: number[] };
+const S: State[] = [
+  { w: 104, h: 104, r: 52, bg: [255, 255, 255] }, // 0 logo circle
+  { w: 1000, h: 108, r: 54, bg: [255, 255, 255] }, // 1 search bar
+  { w: 660, h: 88, r: 44, bg: [17, 17, 24] }, // 2 researching pill
+  { w: 1296, h: 652, r: 30, bg: [255, 255, 255] }, // 3 library
+  { w: 540, h: 812, r: 30, bg: [255, 255, 255] }, // 4 the outlier's card
+];
+/** When each morph runs: [from state, start frame, end frame]. */
+const MORPHS: [number, number, number][] = [
+  [0, 24, 38],
+  [1, 116, 130],
+  [2, 172, 190],
+  [3, 270, 288],
+];
+const T = { type: 42, cps: 34, send: 114, flag: 232, pick: 268, analyze: 338, out: 398 };
+const QUERY = "how to make a good youtube channel";
+
+/** Which state we are in and how far into the morph to the next one (eased 0–1). */
+function phase(f: number) {
+  let state = 0;
+  let k = 0;
+  for (const [from, a, b] of MORPHS) {
+    if (f >= b) state = from + 1;
+    else if (f >= a) {
+      state = from;
+      k = inOut(ramp(f, a, b));
+    }
+  }
+  return { state, k };
 }
 
-/** Hand-drawn marks "boil": their outline re-draws every 8 frames, as in the reference. */
-function Boil({ f, children }: { f: number; children: ReactNode }) {
+/** Content of one state: blurs out during the first part of the morph away from it, blurs in during the last part of the morph into it. */
+function Content({ f, index, children }: { f: number; index: number; children: ReactNode }) {
+  const into = MORPHS.find(([from]) => from + 1 === index);
+  const away = MORPHS.find(([from]) => from === index);
+  const a = into ? ramp(f, lerp(into[1], into[2], 0.45), into[2] + 5) : 1;
+  const b = away ? ramp(f, away[1], lerp(away[1], away[2], 0.5)) : 0;
+  const vis = a * (1 - b);
+  if (vis <= 0.001) return null;
+  const blur = (1 - a) * 14 + b * 14;
+  return <div style={{ position: "absolute", left: "50%", top: "50%", width: S[index].w, height: S[index].h, marginLeft: -S[index].w / 2, marginTop: -S[index].h / 2, opacity: vis, filter: blur > 0.2 ? `blur(${blur}px)` : undefined }}>{children}</div>;
+}
+
+/* ------------------------------------------------------------------ contents */
+
+function SearchBar({ f }: { f: number }) {
+  const typed = Math.max(0, Math.min(QUERY.length, Math.floor(((f - T.type) / 60) * T.cps)));
+  const has = typed > 0;
+  const caret = f < T.send + 4 && (typed < QUERY.length || Math.floor(f / 16) % 2 === 0);
+  const press = f >= T.send && f < T.send + 7;
   return (
-    <svg width={1920} height={1080} viewBox="0 0 1920 1080" style={{ position: "absolute", left: 0, top: 0 }}>
-      <defs>
-        <filter id="boil" x="-5%" y="-5%" width="110%" height="110%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves={2} seed={Math.floor(f / 8)} result="n" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale={9} xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-      </defs>
-      <g filter="url(#boil)">{children}</g>
+    <>
+      <svg width={34} height={34} viewBox="0 0 24 24" style={{ position: "absolute", left: 38, top: 37 }} fill={INK}>
+        <path d="M10 2 L11.8 7.6 L17.5 9.5 L11.8 11.4 L10 17 L8.2 11.4 L2.5 9.5 L8.2 7.6 Z M18.5 13 L19.4 15.6 L22 16.5 L19.4 17.4 L18.5 20 L17.6 17.4 L15 16.5 L17.6 15.6 Z" />
+      </svg>
+      <div style={{ position: "absolute", left: 90, top: 0, bottom: 0, display: "flex", alignItems: "center", fontFamily: FONT.body, fontWeight: 500, fontSize: 38, letterSpacing: "-0.01em", color: INK, whiteSpace: "pre" }}>
+        {has ? QUERY.slice(0, typed) : <span style={{ color: "#a9a9b4", fontWeight: 400 }}>Ask Outlier anything…</span>}
+        {caret && f >= T.type - 4 ? <span style={{ width: 3, height: 44, background: INK, marginLeft: 3 }} /> : null}
+      </div>
+      <div style={{ position: "absolute", right: 18, top: 18, width: 72, height: 72, borderRadius: 99, background: has ? INK : "#c8c8d0", display: "grid", placeItems: "center", transform: `scale(${press ? 0.88 : 1})` }}>
+        <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" />
+        </svg>
+      </div>
+    </>
+  );
+}
+
+function Pill({ f }: { f: number }) {
+  return (
+    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 18, fontFamily: FONT.body, fontWeight: 600, fontSize: 32, color: "#fff", letterSpacing: "-0.01em" }}>
+      <svg width={30} height={30} viewBox="-16 -16 32 32" style={{ transform: `rotate(${f * 11}deg)` }}>
+        <circle r={12} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth={3.4} />
+        <path d="M 0 -12 A 12 12 0 0 1 12 0" fill="none" stroke="#b79cff" strokeWidth={3.4} strokeLinecap="round" />
+      </svg>
+      Researching 105 channels
+    </div>
+  );
+}
+
+const LIBRARY = ["short-a", "mc-0", "mc-3", "hoops-1", "mc-1", "hoops-2", "mc-2", "short-b", "hoops-3", "short-c"];
+const STAR = 2; // the Short that gets flagged
+
+function Library({ f }: { f: number }) {
+  const w = 232;
+  const h = 254;
+  const flag = out(ramp(f, T.flag, T.flag + 14));
+  return (
+    <>
+      <div style={{ position: "absolute", left: 30, top: 24, display: "flex", alignItems: "baseline", gap: 14, fontFamily: FONT.display }}>
+        <span style={{ fontWeight: 700, fontSize: 28, color: INK }}>Viral Shorts</span>
+        <span style={{ fontFamily: FONT.body, fontSize: 21, color: GREY }}>1.3K videos analysed</span>
+      </div>
+      <div style={{ position: "absolute", right: 30, top: 28, fontFamily: FONT.body, fontWeight: 600, fontSize: 20, color: INK, opacity: flag }}>
+        <span style={{ color: VIOLET }}>●</span> Outlier found
+      </div>
+      {LIBRARY.map((clip, i) => {
+        const col = i % 5;
+        const row = Math.floor(i / 5);
+        const focus = ramp(f, 182 + i * 1.5, 204 + i * 1.5); // the grid comes into focus tile by tile
+        const star = i === STAR;
+        return (
+          <div key={clip} style={{ position: "absolute", left: 36 + col * (w + 16), top: 86 + row * (h + 16), width: w, height: h, borderRadius: 16, overflow: "hidden", background: "#e9e9ef", filter: focus < 1 ? `blur(${(1 - focus) * 12}px)` : undefined, opacity: star ? 1 : 1 - 0.45 * flag, outline: star ? `${5 * flag}px solid ${VIOLET}` : undefined, outlineOffset: 2 }}>
+            <Img src={staticFile(`footage/${clip}.jpg`)} style={{ width: w, height: h, objectFit: "cover", transform: `scale(${1.12 - 0.12 * out(focus)})` }} />
+          </div>
+        );
+      })}
+      <div style={{ position: "absolute", left: 36 + STAR * (w + 16) + w / 2 - 80, top: 56, width: 160, height: 38, borderRadius: 99, background: INK, color: "#fff", display: "grid", placeItems: "center", fontFamily: FONT.body, fontWeight: 700, fontSize: 19, opacity: Math.min(1, flag * 2), transform: `translate(0px, ${(1 - flag) * 12}px) scale(${0.7 + 0.3 * flag})` }}>62× outlier</div>
+    </>
+  );
+}
+
+function Detail({ f }: { f: number }) {
+  // the button goes dark → brown-ish → violet as it is clicked, like the reference's "Approve & launch" → "Launched"
+  const done = ramp(f, T.analyze + 2, T.analyze + 14);
+  const press = f >= T.analyze && f < T.analyze + 7;
+  return (
+    <>
+      <div style={{ position: "absolute", left: 28, top: 22, right: 28, display: "flex", alignItems: "center", gap: 12, fontFamily: FONT.body, fontSize: 19, color: INK }}>
+        <span style={{ padding: "5px 14px", borderRadius: 99, background: INK, color: "#fff", fontWeight: 700, fontSize: 16 }}>Shorts</span>
+        <span style={{ fontWeight: 600 }}>GalaxiHD</span>
+        <span style={{ marginLeft: "auto", color: GREY, fontSize: 17 }}>
+          <span style={{ color: VIOLET }}>●</span> 62× outlier
+        </span>
+      </div>
+      <div style={{ position: "absolute", left: 28, top: 70, width: 484, height: 500, borderRadius: 20, overflow: "hidden", background: "#111" }}>
+        <Img src={staticFile("footage/mc-3.jpg")} style={{ width: 484, height: 500, objectFit: "cover" }} />
+      </div>
+      <div style={{ position: "absolute", left: 28, top: 586, right: 28, fontFamily: FONT.body }}>
+        <div style={{ fontSize: 15, color: GREY }}>Title</div>
+        <div style={{ fontFamily: FONT.display, fontWeight: 700, fontSize: 24, color: INK, lineHeight: 1.2, marginTop: 4 }}>This Minecraft Mod Was Going To Replace 40 Mods… Then It Got BANNED</div>
+        <div style={{ fontSize: 18, color: GREY, marginTop: 8 }}>1.6M views · 31.9K subs</div>
+      </div>
+      <div style={{ position: "absolute", left: 28, right: 28, bottom: 26, height: 66, display: "flex", gap: 14, fontFamily: FONT.body, fontWeight: 700, fontSize: 21 }}>
+        <div style={{ width: 130, borderRadius: 99, border: "1.5px solid #dcdce4", color: INK, display: "grid", placeItems: "center" }}>Track</div>
+        <div style={{ flex: 1, borderRadius: 99, background: mix([17, 17, 24], [122, 77, 255], done), color: "#fff", display: "grid", placeItems: "center", transform: `scale(${press ? 0.96 : 1})` }}>
+          <span style={{ position: "absolute", opacity: 1 - ramp(f, T.analyze + 2, T.analyze + 8) }}>Analyze video</span>
+          <span style={{ position: "absolute", opacity: ramp(f, T.analyze + 8, T.analyze + 14) }}>✓ Analyzing</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ cursor and camera */
+
+/** [frame, x, y] in stage pixels (inside the camera). */
+const CURSOR: [number, number, number][] = [
+  [0, 1210, 760],
+  [44, 1180, 690],
+  [100, 1410, 566],
+  [T.send, 1404, 556],
+  [140, 1420, 600],
+  [176, 1330, 640],
+  [214, 1120, 560],
+  [256, 978, 452],
+  [T.pick, 974, 446],
+  [296, 1080, 640],
+  [330, 1040, 884],
+  [T.analyze, 1036, 882],
+  [396, 1100, 930],
+];
+
+function Cursor({ f }: { f: number }) {
+  let i = 0;
+  while (i < CURSOR.length - 2 && f > CURSOR[i + 1][0]) i++;
+  const [f0, x0, y0] = CURSOR[i];
+  const [f1, x1, y1] = CURSOR[i + 1];
+  const k = inOut(ramp(f, f0, f1));
+  const down = [T.send, T.pick, T.analyze].some((c) => f >= c && f < c + 7);
+  return (
+    <svg width={40} height={40} viewBox="0 0 24 24" style={{ position: "absolute", left: 0, top: 0, opacity: ramp(f, 30, 40), transform: `translate(${lerp(x0, x1, k)}px, ${lerp(y0, y1, k)}px) scale(${down ? 0.84 : 1})`, transformOrigin: "0 0" }}>
+      <path d="M4 2 L4 20 L9 15.5 L12.2 22.5 L15 21.2 L11.9 14.4 L18.5 14 Z" fill="#111" stroke="#fff" strokeWidth={1.6} strokeLinejoin="round" />
     </svg>
   );
 }
 
-const TYPED = "before they blow up";
-
-/** f0–f150. "Find outliers" drops in and lifts; "before they blow up" types in under it inside a text box; an arrow scribbles on. */
-function Hook({ f }: { f: number }) {
-  const T = { find: 4, outliers: 13, lift: 40, type: 52, box: 58, handles: 112, arrow: 84, quoteL: 100, quoteR: 106 };
-  // the reference's lift: straight up, 19 px past, 5 px back under, settled
-  const lift = f < T.lift ? 0 : (table(REF.lift, 138 + (f - T.lift)) - 482) * 0.9;
-  const typedEnd = T.type + TYPED.length * 2.9;
-  // the typed line starts at the right and slides left as letters arrive (the reference's curve, stretched to this line's length)
-  const slide = ((table(REF.line2Left, 151 + ((f - T.type) / (typedEnd - T.type)) * 27) - 663) / 462) * 560;
-  const big: CSSProperties = { fontFamily: FONT.display, fontWeight: 800, fontSize: 168, lineHeight: "170px", letterSpacing: "-0.035em", color: WHITE, whiteSpace: "nowrap" };
-  const handle = (x: number, y: number) => <div style={{ position: "absolute", left: x - 8, top: y - 8, width: 16, height: 16, background: WHITE, border: `3px solid ${SKY}`, transform: `scale(${easeOut(ramp(f, T.handles, T.handles + 8))})` }} />;
-  const box = { x: 484, y: 548, w: 952, h: 128 };
-  return (
-    <AbsoluteFill>
-      <div style={{ position: "absolute", left: 0, width: 1920, top: 452 + lift, display: "flex", justifyContent: "center", gap: 44, ...big }}>
-        <span style={{ ...fade, display: "inline-block", visibility: f < T.find ? "hidden" : "visible", transform: `translate(0px, ${drop(f, T.find)}px)` }}>Find</span>
-        <span style={{ ...fade, display: "inline-block", visibility: f < T.outliers ? "hidden" : "visible", transform: `translate(0px, ${drop(f, T.outliers)}px)` }}>outliers</span>
-      </div>
-
-      <div style={{ position: "absolute", left: box.x, top: box.y, width: box.w, height: box.h, border: "2px dashed rgba(255,255,255,0.5)", opacity: ramp(f, T.box, T.box + 3) }} />
-      <div style={{ position: "absolute", left: box.x + 22, top: box.y + 12, fontFamily: FONT.display, fontWeight: 700, fontSize: 96, lineHeight: "104px", letterSpacing: "-0.03em", whiteSpace: "pre", transform: `translate(${Math.max(0, slide)}px, 0px)` }}>
-        {TYPED.split("").map((ch, i) => {
-          const born = T.type + i * 2.9; // the reference's typing speed
-          const k = ramp(f, born, born + 4);
-          const fresh = f < born + 7; // the newest letters are highlighted
-          return (
-            <span key={i} style={{ ...fade, display: "inline-block", opacity: f < born ? 0 : 0.35 + 0.65 * k, color: fresh ? SKY : WHITE, transform: `scale(${1.22 - 0.22 * easeOut(k)})`, filter: k < 1 ? `blur(${(1 - k) * 5}px)` : undefined, transformOrigin: "50% 80%" }}>
-              {ch}
-            </span>
-          );
-        })}
-      </div>
-      {handle(box.x, box.y)}
-      {handle(box.x + box.w, box.y)}
-      {handle(box.x, box.y + box.h)}
-      {handle(box.x + box.w, box.y + box.h)}
-
-      <div style={{ position: "absolute", left: 588, top: 268, ...big, fontSize: 110, lineHeight: "110px", opacity: ramp(f, T.quoteL, T.quoteL + 5), transform: `scale(${0.6 + 0.4 * easeOut(ramp(f, T.quoteL, T.quoteL + 12))})` }}>“</div>
-      <div style={{ position: "absolute", left: 1478, top: 268, ...big, fontSize: 110, lineHeight: "110px", opacity: ramp(f, T.quoteR, T.quoteR + 5), transform: `scale(${0.6 + 0.4 * easeOut(ramp(f, T.quoteR, T.quoteR + 12))})` }}>”</div>
-
-      <Boil f={f}>
-        <Stroke f={f} color={WHITE} start={T.arrow} end={T.arrow + 14} width={26} d="M 1700 1050 C 1730 900 1690 790 1560 700" />
-        <Stroke f={f} color={WHITE} start={T.arrow + 12} end={T.arrow + 18} width={22} head d="M 1552 786 L 1540 690 L 1636 690" />
-        <Stroke f={f} color={WHITE} start={T.arrow + 6} end={T.arrow + 30} width={7} d="M 150 250 C 210 236 270 268 290 306 C 306 342 250 348 246 306 C 242 272 350 322 452 404" />
-        <Stroke f={f} color={WHITE} start={T.arrow + 30} end={T.arrow + 40} width={7} head d="M 462 356 L 458 410 L 404 400" />
-      </Boil>
-    </AbsoluteFill>
-  );
-}
-
-/* ------------------------------------------------------------------ beat 2: the name */
-
-const SUB = "The outlier finder for YouTube Shorts";
-
-/** f138–f289. "Introducing" drops in, the logo pops up like the reference's icon, "Outlier" snaps in letter by letter, the subtitle colour-wipes. */
-function Name({ f }: { f: number }) {
-  const T = { label: 142, logo: 150, name: 156, sub: 192, line: 214 };
-  // the logo rides the reference's icon curve: up from below, 11 px past, settle
-  const iconTop = table(REF.icon, 39 + (f - T.logo), 2);
-  const logoY = f < T.logo ? 60 : iconTop - 505;
-  const glow = f < T.logo ? 0 : 1 - ramp(f, T.logo + 2, T.logo + 10);
-  return (
-    <AbsoluteFill>
-      <div style={{ position: "absolute", left: 0, width: 1920, top: 312, textAlign: "center", fontFamily: FONT.display, fontWeight: 500, fontSize: 52, color: INK, letterSpacing: "-0.02em", visibility: f < T.label ? "hidden" : "visible", transform: `translate(0px, ${drop(f, T.label, 1)}px)` }}>Introducing</div>
-
-      <div style={{ position: "absolute", left: 0, width: 1920, top: 392, height: 210, display: "flex", justifyContent: "center", alignItems: "center", gap: 30, fontFamily: FONT.display, fontWeight: 800, fontSize: 190, letterSpacing: "-0.035em", color: INK, whiteSpace: "pre" }}>
-        <div style={{ opacity: ramp(f, T.logo, T.logo + 3), transform: `translate(0px, ${logoY}px)`, borderRadius: 34, boxShadow: glow > 0.01 ? `0 0 ${44 * glow}px ${10 * glow}px rgba(122,77,255,${0.7 * glow})` : undefined }}>
-          <LogoMark size={156} />
-        </div>
-        <span style={{ display: "inline-block" }}>
-          {"Outlier".split("").map((c, i) => {
-            const born = T.name + i * 3.7; // snapping: a letter comes up from below every ~3.7 frames, the word re-centres as it grows
-            const k = ramp(f, born, born + 4);
-            if (f < born) return null;
-            return (
-              <span key={i} style={{ display: "inline-block", position: "relative" }}>
-                <span style={{ visibility: "hidden", fontSize: `${k}em` }}>{c}</span>
-                <span style={{ ...fade, position: "absolute", left: 0, bottom: 0, transform: `translate(0px, ${(1 - easeOut(k)) * 90}px)`, opacity: 0.4 + 0.6 * k }}>{c}</span>
-              </span>
-            );
-          })}
-        </span>
-      </div>
-
-      {/* colour wipe: the whole line arrives violet, then turns to ink one letter at a time */}
-      <div style={{ position: "absolute", left: 0, width: 1920, top: 632, textAlign: "center", fontFamily: FONT.display, fontWeight: 500, fontSize: 58, letterSpacing: "-0.02em", whiteSpace: "pre", visibility: f < T.sub ? "hidden" : "visible", opacity: 0.4 + 0.6 * ramp(f, T.sub, T.sub + 6) }}>
-        {SUB.split("").map((c, i) => (
-          <span key={i} style={{ color: f >= T.sub + 5 + i * 1.5 ? INK : POP }}>
-            {c}
-          </span>
-        ))}
-      </div>
-
-      <Boil f={f}>
-        <Stroke f={f} color={INK} start={T.line} end={T.line + 16} width={9} d="M 690 742 C 860 722 1060 752 1232 730" />
-        <Stroke f={f} color={INK} start={T.line + 8} end={T.line + 22} width={22} d="M 250 190 C 330 170 400 250 470 330" />
-        <Stroke f={f} color={INK} start={T.line + 20} end={T.line + 26} width={20} head d="M 478 244 L 480 340 L 388 338" />
-        <Stroke f={f} color={INK} start={T.line + 14} end={T.line + 30} width={6} d="M 1640 880 L 1548 800" />
-        <Stroke f={f} color={INK} start={T.line + 30} end={T.line + 38} width={6} head d="M 1594 802 L 1546 798 L 1552 846" />
-      </Boil>
-    </AbsoluteFill>
-  );
-}
-
-/* ------------------------------------------------------------------ shot 3 */
-
-type Kind = "colors" | "bounce" | "mix" | "typewriter" | "snapping";
-const BUTTONS: [keyof typeof REF.buttons, Kind, string][] = [
-  ["Colors", "colors", "Niche Finder"],
-  ["Bounce", "bounce", "Viral Videos"],
-  ["Mix", "mix", "Analyze Video"],
-  ["Typewriter", "typewriter", "Script Writer"],
-  ["Snapping", "snapping", "Tracked Channels"],
+/** Camera zoom: tight on each new state, easing back, with a slow push while things hold. [frame, zoom] */
+const CAMERA: [number, number][] = [
+  [0, 1.5],
+  [24, 1.6],
+  [40, 1.75],
+  [112, 1.12],
+  [130, 1.2],
+  [172, 1.36],
+  [190, 1.55],
+  [256, 1.0],
+  [270, 1.02],
+  [288, 1.16],
+  [345, 1.0],
+  [420, 1.06],
 ];
-
-function Label({ f, kind, text }: { f: number; kind: Kind; text: string }) {
-  const chars = text.split("");
-  const letters = chars.map((c, i) => (c === " " ? -1 : chars.slice(0, i).filter((x) => x !== " ").length)); // index among non-space letters
-  let inner: ReactNode;
-  if (kind === "colors") {
-    // all blue from f289, fading up to f295; then white one letter at a time, every 6 frames from f293
-    inner = chars.map((c, i) => (
-      <span key={i} style={{ color: letters[i] >= 0 && f >= 293 + letters[i] * 5.8 ? WHITE : SKY }}>
-        {c}
-      </span>
-    ));
-    return <span style={{ whiteSpace: "pre", opacity: 0.55 + 0.45 * ramp(f, 289, 295), visibility: f < 289 ? "hidden" : "visible" }}>{inner}</span>;
-  }
-  if (kind === "bounce") {
-    // rises ~6 px/frame from f293, 15 px past its rest at f311–f312, settled by f333 (measured curve)
-    return <span style={{ display: "inline-block", whiteSpace: "pre", opacity: ramp(f, 292, 303), transform: `translate(0px, ${f < 293 ? 72 : table(REF.bounceY, f) - 418}px)` }}>{text}</span>;
-  }
-  if (kind === "mix") {
-    // letters arrive from the right every 3 frames from f294: small, blue and soft, then white; the word slides left past its rest and back
-    const last = Math.max(...letters);
-    inner = chars.map((c, i) => {
-      const born = 294 + Math.max(0, letters[i]) * 3;
-      const k = ramp(f, born, born + 6);
-      const blue = letters[i] === last ? f < 323 : f < born + 5;
-      return (
-        <span key={i} style={{ display: "inline-block", opacity: f < born ? 0 : k, color: blue ? SKY : WHITE, transform: `translate(${(1 - easeOut(k)) * 16}px, 0px) scale(${0.6 + 0.4 * easeOut(k)})`, filter: k < 1 ? `blur(${(1 - k) * 4}px)` : undefined }}>
-          {c}
-        </span>
-      );
-    });
-    return <span style={{ display: "inline-block", whiteSpace: "pre", transform: `translate(${f < 294 ? 43 : table(REF.mixX0, f) - 1385}px, 0px)` }}>{inner}</span>;
-  }
-  if (kind === "typewriter") {
-    // one character every 4.7 frames from f291; each appears grey and brightens over 3 frames
-    inner = chars.map((c, i) => {
-      const born = 291 + i * 4.7;
-      return (
-        <span key={i} style={{ opacity: f < born ? 0 : 0.45 + 0.55 * ramp(f, born, born + 3) }}>
-          {c}
-        </span>
-      );
-    });
-    return <span style={{ whiteSpace: "pre" }}>{inner}</span>;
-  }
-  // snapping: a letter comes up from below about every 3.7 frames from f298 and snaps into place; the word re-centres as it grows
-  inner = chars.map((c, i) => {
-    const born = 298 + i * 3.7;
-    const k = ramp(f, born, born + 4);
-    if (f < born) return null;
-    return (
-      <span key={i} style={{ display: "inline-block", position: "relative" }}>
-        {/* takes up a growing share of the letter's width, so the centred word glides instead of jumping */}
-        <span style={{ visibility: "hidden", fontSize: `${k}em` }}>{c}</span>
-        <span style={{ position: "absolute", left: 0, bottom: 0, transform: `translate(0px, ${(1 - easeOut(k)) * 42}px)`, opacity: 0.4 + 0.6 * k }}>{c}</span>
-      </span>
-    );
-  });
-  return <span style={{ display: "inline-block", whiteSpace: "pre" }}>{inner}</span>;
-}
-
-/** f275–f419. Five feature buttons, each label arriving with a different one of the reference's text animations. */
-function Features({ f }: { f: number }) {
-  const local = f;
-  return (
-    <AbsoluteFill>
-      {BUTTONS.map(([key, kind, text]) => {
-        const [x0, y0, x1, y1] = REF.buttons[key];
-        return (
-          <div key={key} style={{ position: "absolute", left: x0, top: y0, width: x1 - x0 + 1, height: y1 - y0 + 1, borderRadius: 8, background: "rgba(10,6,44,0.5)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontFamily: FONT.display, fontWeight: 500, fontSize: 50, letterSpacing: "-0.02em", color: WHITE }}>
-            <Label f={local} kind={kind} text={text} />
-          </div>
-        );
-      })}
-    </AbsoluteFill>
-  );
+function zoomAt(f: number) {
+  let i = 0;
+  while (i < CAMERA.length - 2 && f > CAMERA[i + 1][0]) i++;
+  const [f0, z0] = CAMERA[i];
+  const [f1, z1] = CAMERA[i + 1];
+  // zoom-outs ease out (fast then settling); pushes and morph kicks ease in-out
+  const k = z1 < z0 ? Easing.out(Easing.cubic)(ramp(f, f0, f1)) : inOut(ramp(f, f0, f1));
+  return lerp(z0, z1, k);
 }
 
 /* ------------------------------------------------------------------ the intro */
 
-// Two straight 12- and 15-frame dissolves, like the reference's.
-const D1 = [138, 150] as const;
-const D2 = [275, 289] as const;
-
-/** How light the stage is during the intro (0 = deep, 1 = light), for the shared background. */
-export function introLight(f: number) {
-  return ramp(f, D1[0], D1[1]) * (1 - ramp(f, D2[0], D2[1]));
-}
-
-/** Frames 0–419: hook → name → features. Draws only its own content; the gradient stage is shared with the rest of the film. */
 export function Intro() {
   const f = useCurrentFrame();
-  const d1 = ramp(f, D1[0], D1[1]);
-  const d2 = ramp(f, D2[0], D2[1]);
-  const out = ramp(f, INTRO_FRAMES - 12, INTRO_FRAMES); // hand-off to the first feature scene
+  const { state, k } = phase(f);
+  const a = S[state];
+  const b = S[Math.min(S.length - 1, state + 1)];
+  const pop = out(ramp(f, 2, 20)); // the circle pops in
+  const leave = ramp(f, T.out, INTRO_FRAMES); // the blur hand-off into the first feature scene
+  const zoom = zoomAt(f) * (1 + 0.08 * leave);
   return (
-    <AbsoluteFill style={{ opacity: 1 - out }}>
-      {f <= D1[1] ? (
-        <AbsoluteFill style={{ opacity: 1 - d1 }}>
-          <Hook f={f} />
-        </AbsoluteFill>
-      ) : null}
-      {f >= D1[0] && f <= D2[1] ? (
-        <AbsoluteFill style={{ opacity: d1 * (1 - d2) }}>
-          <Name f={f} />
-        </AbsoluteFill>
-      ) : null}
-      {f >= D2[0] ? (
-        <AbsoluteFill style={{ opacity: d2 }}>
-          <Features f={f} />
-        </AbsoluteFill>
-      ) : null}
+    <AbsoluteFill style={{ opacity: 1 - Easing.in(Easing.quad)(leave), filter: leave > 0.01 ? `blur(${leave * 16}px)` : undefined }}>
+      <AbsoluteFill style={{ transformOrigin: "960px 540px", transform: `scale(${zoom})` }}>
+        <div
+          style={{
+            position: "absolute",
+            left: 960 - lerp(a.w, b.w, k) / 2,
+            top: 540 - lerp(a.h, b.h, k) / 2,
+            width: lerp(a.w, b.w, k),
+            height: lerp(a.h, b.h, k),
+            borderRadius: lerp(a.r, b.r, k),
+            background: mix(a.bg, b.bg, k),
+            boxShadow: "0 30px 80px rgba(12,6,70,0.38), 0 4px 14px rgba(12,6,70,0.2)",
+            overflow: "hidden",
+            opacity: Math.min(1, pop * 2),
+            transform: `scale(${0.4 + 0.6 * pop})`,
+          }}
+        >
+          <Content f={f} index={0}>
+            <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
+              <LogoMark size={64} />
+            </div>
+          </Content>
+          <Content f={f} index={1}>
+            <SearchBar f={f} />
+          </Content>
+          <Content f={f} index={2}>
+            <Pill f={f} />
+          </Content>
+          <Content f={f} index={3}>
+            <Library f={f} />
+          </Content>
+          <Content f={f} index={4}>
+            <Detail f={f} />
+          </Content>
+        </div>
+        <Cursor f={f} />
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 }
