@@ -270,13 +270,13 @@ function LeakInner({ len, seed, hue, strength, width, height }: { len: number; s
 }
 
 /** The finishing pass over the whole frame: film grain that changes every frame, and a vignette. */
-export function Finish({ grain = 0.11 }: { grain?: number }) {
+export function Finish({ grain = 0.11, vignette = 1 }: { grain?: number; vignette?: number }) {
   const frame = useCurrentFrame();
   const ox = Math.floor(random(`gx-${frame}`) * 512);
   const oy = Math.floor(random(`gy-${frame}`) * 512);
   return (
     <AbsoluteFill style={{ pointerEvents: "none" }}>
-      <AbsoluteFill style={{ background: "radial-gradient(ellipse 78% 78% at 50% 50%, transparent 55%, rgba(0,0,0,0.6) 100%)" }} />
+      <AbsoluteFill style={{ opacity: vignette, background: "radial-gradient(ellipse 78% 78% at 50% 50%, transparent 55%, rgba(0,0,0,0.6) 100%)" }} />
       <AbsoluteFill style={{ backgroundImage: `url(${staticFile("fx/grain.png")})`, backgroundPosition: `${ox}px ${oy}px`, mixBlendMode: "overlay", opacity: grain }} />
     </AbsoluteFill>
   );

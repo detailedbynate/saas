@@ -1,9 +1,10 @@
-import { AbsoluteFill, Audio, Sequence, continueRender, delayRender, interpolate, staticFile } from "remotion";
+import { AbsoluteFill, Audio, Sequence, continueRender, delayRender, interpolate, staticFile, useCurrentFrame } from "remotion";
 import { type ComponentType, useEffect, useState } from "react";
 import { SmoothMotionBlur } from "./components/blur";
 import { Finish } from "./components/fx";
 import { Bands } from "./film/kit";
-import { AnalyzeVideo, End, Hook, Intro, NicheFinder, ScriptWriter, Tagline, TrackedChannels, ViralVideos } from "./film/scenes";
+import { INTRO_FRAMES, Intro } from "./film/intro";
+import { AnalyzeVideo, End, NicheFinder, ScriptWriter, Tagline, TrackedChannels, ViralVideos } from "./film/scenes";
 import { fontsReady } from "./theme";
 import { FPS, SHOTS, type SceneId, TOTAL_FRAMES } from "./timeline";
 
@@ -12,14 +13,12 @@ const f = (sec: number) => Math.round(sec * FPS);
 
 /** Every scene after the first starts this long before the previous one ends, so its first words are already arriving as the old scene leaves. */
 const OVERLAP = 0.2;
-const lead = (id: SceneId) => (id === "hook" ? 0 : OVERLAP);
+const lead = (id: SceneId) => (id === "intro" ? 0 : OVERLAP);
 /** When a scene's own clock starts, in film seconds. */
 const start = (id: SceneId) => S[id].at - lead(id);
 const length = (id: SceneId) => S[id].dur + lead(id);
 
 const SCENES: [SceneId, ComponentType<{ dur: number }>][] = [
-  ["hook", Hook],
-  ["intro", Intro],
   ["niche", NicheFinder],
   ["viral", ViralVideos],
   ["analyze", AnalyzeVideo],
@@ -32,12 +31,11 @@ const SCENES: [SceneId, ComponentType<{ dur: number }>][] = [
 /** Sound effects: [file, seconds, volume]. A soft whoosh into each scene, clicks on the clicks, a hit on the end card. */
 const SFX: [string, number, number][] = [
   ...SCENES.slice(1).map(([id]): [string, number, number] => ["whoosh", start(id) - 0.1, 0.25]),
-  ["shimmer", start("hook") + 0.1, 0.3],
-  ["pop", start("hook") + 1.3, 0.3],
-  ["whoosh", start("hook") + 1.45, 0.25],
-  ["ding", start("hook") + 2.0, 0.3],
-  ["subhit", start("intro") + 0.4, 0.7],
-  ["shimmer", start("intro") + 0.45, 0.4],
+  // The intro's hits, on the reference's frames (SPEC.md, "Sound")
+  ["pop", 42 / 60, 0.35],
+  ["pop", 165 / 60, 0.3],
+  ["subhit", 265 / 60, 0.8],
+  ["pop", 386 / 60, 0.3],
   ["typing", start("niche") + 1.35, 0.3],
   ["click", start("niche") + 2.45, 0.5],
   ...[0, 1, 2].map((i): [string, number, number] => ["pop", start("niche") + 2.8 + i * 0.09, 0.22]),
@@ -63,6 +61,10 @@ function Film() {
           <Scene dur={length(id)} />
         </Sequence>
       ))}
+      {/* The intro sits on top and fades away over its last 12 frames. */}
+      <Sequence name="intro" durationInFrames={INTRO_FRAMES}>
+        <Intro />
+      </Sequence>
     </AbsoluteFill>
   );
 }
@@ -110,6 +112,9 @@ function useFonts() {
 
 export function OutlierLaunch({ motionBlur }: LaunchProps) {
   useFonts();
+  const frame = useCurrentFrame();
+  // The intro's gradient has no vignette; it comes in with the dark stage as the intro fades away.
+  const vignette = interpolate(frame, [INTRO_FRAMES - 12, INTRO_FRAMES], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   return (
     <AbsoluteFill style={{ background: "#000" }}>
       {motionBlur > 0 ? (
@@ -119,7 +124,7 @@ export function OutlierLaunch({ motionBlur }: LaunchProps) {
       ) : (
         <Film />
       )}
-      <Finish grain={0.07} />
+      <Finish grain={0.07} vignette={vignette} />
 
       <Audio src={staticFile("audio/music.wav")} volume={(fr) => interpolate(fr, [TOTAL_FRAMES - f(0.9), TOTAL_FRAMES], [0.8, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })} />
       {SFX.map(([name, at, vol], i) => (

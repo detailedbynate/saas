@@ -264,3 +264,11 @@ tilted card rise that pushes the title, never-ending camera push, overlapped han
 - Niche Finder is now search → report (money tiles, top niches, inside Mods with the ring).
 - Script Writer scene added, tagged "Soon" as in the app. Its three script lines are
   illustrative copy, not app output. Dashboard scene dropped to stay under 35s.
+
+## v11: intro rebuilt from a frame-measured spec (35.2s)
+
+The first 7.0 s (f0–f419) is rebuilt shot for shot from `SPEC.md` (reference: the "Clean Text
+Animation" tutorial intro), in `src/film/intro.tsx`, driven by the measured curves in
+`src/film/introData.ts`. Background is the client's supplied gradient, pushed toward purple and
+animated (no outlined words). Differences from the reference, with frame numbers, are listed at
+the end of `SPEC.md`. Everything after 7 s is unchanged from v10.

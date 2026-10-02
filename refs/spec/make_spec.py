@@ -178,5 +178,6 @@ Confidence is moderate: I can time these to ±1 frame, but I cannot separate qui
 - Anything after f545 (9.1 s).
 - Motion blur: frames mid-move show soft edges on the dropping words and on "A", but the screen recording's own compression blurs too, so I can't give a shutter value.
 ''')
+w(open(os.path.join(D,'BUILD.md')).read())
 open(os.path.join(D,'..','..','SPEC.md'),'w').write('\n'.join(o))
 print('lines',len(o))
