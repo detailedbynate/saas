@@ -31,6 +31,7 @@ import {
   Streaks,
   Title,
   Typing,
+  WordIn,
   p,
   useT,
 } from "./kit";
@@ -50,52 +51,85 @@ const label = {
   color: "rgba(255,255,255,0.55)",
 } as const;
 
-/* ------------------------------------------------------------------ 1. Hook: a typed line whose middle gets selected and swapped */
+/* ------------------------------------------------------------------ 1. Hook: among a wall of Shorts, a phrase gets selected and swapped, and one Short lights up */
 
 const SELECT = "linear-gradient(90deg, #c4b5fd 0%, #f0abfc 55%, #fcd34d 100%)";
 
+/** The wall: dim, out-of-focus Shorts drifting upward at different speeds around the headline. [clip, x, y, width, speed] */
+const WALL: [string, number, number, number, number][] = [
+  ["short-a", 150, 190, 190, 1.0],
+  ["hoops-1", 420, 760, 170, 0.6],
+  ["short-b", 60, 660, 150, 0.8],
+  ["hoops-2", 1590, 640, 190, 0.9],
+  ["short-c", 1330, 800, 160, 0.55],
+  ["hoops-3", 1180, 60, 130, 0.7],
+];
+const STAR: Box = { x: 1560, y: 96, w: 168, h: 298 }; // the one that breaks out
+
 export function Hook({ dur }: SceneProps) {
   const t = useT();
-  const cps = 15;
-  const T = { type: 0.2, select: 1.7, swap: 2.3, more: 2.85 };
-  const head = "Find ";
-  const old = "trending Shorts";
-  const tail = " before they blow up";
-  const wipe = p(t, T.select, 0.55, Easing.bezier(0.4, 0, 0.2, 1)); // the selection sweeps across the phrase
-  const roll = p(t, T.swap, 1.0); // old phrase rolls up and out, the new word rolls in from below
+  const T = { words: 0.1, select: 1.0, swap: 1.5, tail: 2.05 };
+  const wipe = p(t, T.select, 0.5, Easing.bezier(0.4, 0, 0.2, 1)); // the selection sweeps across the phrase
+  const roll = p(t, T.swap, 1.0); // old phrase rolls up and out…
   const rollSoft = p(t, T.swap, 0.45, SOFT);
-  // the new word follows a beat behind, so the two never sit on top of each other
-  const rollIn = p(t, T.swap + 0.2, 1.0);
+  const rollIn = p(t, T.swap + 0.2, 1.0); // …the new word rolls in a beat behind
   const inSoft = p(t, T.swap + 0.2, 0.55, SOFT);
-  const frame = p(t, T.swap + 0.3, 0.9); // the selection box draws on
-  const tick = p(t, T.select + 0.35, 0.6);
-  // The whole sentence is laid out from the start; the stage slides so what is visible stays centred.
-  const pan = 370 * (1 - p(t, T.swap, 1.9, SINE));
+  const frame = p(t, T.swap + 0.45, 0.9); // the selection box draws on
+  const tick = p(t, T.select + 0.3, 0.6);
+  const lit = p(t, T.swap + 0.15, 1.2); // the breakout Short comes into focus as "outliers" lands
+  const litSoft = p(t, T.swap + 0.15, 0.7, SOFT);
+  const badge = p(t, T.swap + 0.55, 0.9);
   const handle = (left: boolean, top: boolean) => (
-    <span style={{ position: "absolute", width: 9, height: 9, background: "#fff", border: `2px solid ${ACCENT}`, left: left ? -6 : undefined, right: left ? undefined : -6, top: top ? -6 : undefined, bottom: top ? undefined : -6, transform: `scale(${p(t, T.swap + 0.3 + (left ? 0 : 0.5), 0.5)})` }} />
+    <span style={{ position: "absolute", width: 12, height: 12, background: "#fff", border: `2px solid ${ACCENT}`, left: left ? -8 : undefined, right: left ? undefined : -8, top: top ? -8 : undefined, bottom: top ? undefined : -8, transform: `scale(${p(t, T.swap + 0.45 + (left ? 0 : 0.45), 0.5)})` }} />
   );
-  const out = { opacity: 1 - rollSoft, transform: `translate(0px, ${-0.55 * roll}em)`, filter: rollSoft > 0.005 && rollSoft < 1 ? `blur(${rollSoft * 12}px)` : undefined } as const;
   return (
-    <Stage t={t} dur={dur} push={1.3} amount={0.13} creep={0.06} origin={[960, 540]}>
-      <div style={{ position: "absolute", left: 0, width: 1920, top: 440, height: 200, transform: `translate(${pan}px, 0px)`, display: "flex", justifyContent: "center", alignItems: "center", fontFamily: FONT.display, fontWeight: 500, fontSize: 86, letterSpacing: "-0.03em", color: C.text, whiteSpace: "pre" }}>
-        <Typing t={t} text={head} at={T.type} cps={cps} caret={t < T.type + head.length / cps} hold={0} />
+    <Stage t={t} dur={dur} push={0.2} amount={0.12} creep={0.07} origin={[960, 560]}>
+      {/* the wall of Shorts, out of focus */}
+      {WALL.map(([clip, x, y, w, v], i) => {
+        const k = p(t, 0.05 + i * 0.07, 1.4);
+        return (
+          <div key={clip} style={{ position: "absolute", left: x, top: y, opacity: 0.26 * p(t, 0.05 + i * 0.07, 0.7, SOFT), filter: "blur(5px)", transform: `translate(0px, ${(1 - k) * 120 - t * 26 * v}px) rotate(${(i % 2 ? 1 : -1) * 3}deg)` }}>
+            <ShortCard clip={clip} w={w} h={w * 1.78} flat />
+          </div>
+        );
+      })}
+      {/* the one that breaks out */}
+      <GlowRect x={STAR.x + 30} y={STAR.y + 30 - t * 8} w={STAR.w - 60} h={STAR.h - 60} spread={150} a={0.75 * litSoft} />
+      <div style={{ position: "absolute", left: STAR.x, top: STAR.y, opacity: 0.26 + 0.74 * litSoft, filter: litSoft < 0.995 ? `blur(${(1 - litSoft) * 5}px)` : undefined, transform: `translate(0px, ${(1 - p(t, 0.3, 1.4)) * 120 - t * 8}px) rotate(${3 - 3 * lit}deg) scale(${1 + 0.12 * lit})` }}>
+        <ShortCard clip="mc-3" w={STAR.w} h={STAR.h} flat />
+        <div style={{ position: "absolute", left: 12, bottom: 12, padding: "6px 16px", borderRadius: 999, background: "linear-gradient(180deg, #8b5cf6, #6d28d9)", color: "#fff", fontFamily: FONT.display, fontWeight: 800, fontSize: 32, letterSpacing: "-0.02em", opacity: Math.min(1, badge * 3), transform: `translate(0px, ${(1 - badge) * 22}px) scale(${0.6 + 0.4 * badge})`, transformOrigin: "0% 100%" }}>62×</div>
+      </div>
+
+      {/* the headline */}
+      <div style={{ position: "absolute", left: 0, width: 1920, top: 420, height: 180, display: "flex", justifyContent: "center", alignItems: "center", fontFamily: FONT.display, fontWeight: 700, fontSize: 118, letterSpacing: "-0.035em", color: C.text, whiteSpace: "pre" }}>
+        <WordIn t={t} at={T.words}>
+          Find
+        </WordIn>
         <span style={{ display: "inline-grid", position: "relative" }}>
           {/* keeps the slot as wide as the old phrase, then lets it close up smoothly to the new word */}
-          <span style={{ gridArea: "1 / 1", visibility: "hidden", fontSize: `${1 - 0.7 * roll}em`, lineHeight: 0 }}>{old}</span>
+          <span style={{ gridArea: "1 / 1", visibility: "hidden", fontSize: `${1 - 0.7 * roll}em`, lineHeight: 0 }}>trending Shorts</span>
           {roll < 1 ? (
-            <span style={{ position: "absolute", left: 0, top: 0, ...out }}>
-              <span style={{ display: "inline-block", clipPath: `inset(-20% 0 -20% ${wipe * 100}%)` }}>
-                <Typing t={t} text={old} at={T.type + head.length / cps} cps={cps} caret={t < T.select} hold={9} />
+            <span style={{ position: "absolute", left: 0, top: 0, opacity: 1 - rollSoft, transform: `translate(0px, ${-0.5 * roll}em)`, filter: rollSoft > 0.005 ? `blur(${rollSoft * 14}px)` : undefined }}>
+              <span style={{ display: "inline-block", clipPath: `inset(-30% 0 -30% ${wipe * 100}%)` }}>
+                <WordIn t={t} at={T.words + 0.13}>
+                  trending
+                </WordIn>
+                <WordIn t={t} at={T.words + 0.26}>
+                  Shorts
+                </WordIn>
               </span>
-              <span style={{ position: "absolute", left: 0, top: 0, clipPath: `inset(-20% ${100 - wipe * 100}% -20% 0)`, background: SELECT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>{old}</span>
+              <span style={{ position: "absolute", left: 0, top: 0, clipPath: `inset(-30% ${100 - wipe * 100}% -30% 0)`, background: SELECT, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+                <span style={{ display: "inline-block", marginRight: "0.26em" }}>trending</span>
+                <span style={{ display: "inline-block" }}>Shorts</span>
+              </span>
               {tick > 0 && tick < 1
-                ? [-1, 1].map((d) => <span key={d} style={{ position: "absolute", left: "50%", top: -50, width: 8, height: 32, borderRadius: 9, background: "#fff", opacity: 1 - tick, transform: `translate(${d * 34}px, ${-tick * 26}px) rotate(${d * 22}deg) scaleY(${1 - 0.5 * tick})`, boxShadow: "0 0 14px 2px rgba(255,255,255,0.8)" }} />)
+                ? [-1, 1].map((d) => <span key={d} style={{ position: "absolute", left: "46%", top: -40, width: 10, height: 40, borderRadius: 9, background: "#fff", opacity: 1 - tick, transform: `translate(${d * 44}px, ${-tick * 30}px) rotate(${d * 22}deg) scaleY(${1 - 0.5 * tick})`, boxShadow: "0 0 16px 3px rgba(255,255,255,0.8)" }} />)
                 : null}
             </span>
           ) : null}
-          <span style={{ gridArea: "1 / 1", justifySelf: "start", position: "relative", padding: "0 12px", opacity: inSoft, transform: `translate(0px, ${0.55 * (1 - rollIn)}em)`, filter: inSoft < 0.995 ? `blur(${(1 - inSoft) * 12}px)` : undefined }}>
-            <span style={{ position: "absolute", inset: "10px 0", border: `2px solid ${ACCENT}`, clipPath: `inset(-10px ${(1 - frame) * 100}% -10px -10px)` }} />
-            <span style={{ position: "absolute", inset: "10px 0" }}>
+          <span style={{ gridArea: "1 / 1", justifySelf: "start", position: "relative", padding: "0 18px", color: "#c4b5fd", opacity: inSoft, transform: `translate(0px, ${0.5 * (1 - rollIn)}em)`, filter: inSoft < 0.995 ? `blur(${(1 - inSoft) * 14}px)` : undefined }}>
+            <span style={{ position: "absolute", inset: "14px 0", border: `2px solid ${ACCENT}`, clipPath: `inset(-10px ${(1 - frame) * 100}% -10px -10px)` }} />
+            <span style={{ position: "absolute", inset: "14px 0" }}>
               {handle(true, true)}
               {handle(true, false)}
               {handle(false, true)}
@@ -104,113 +138,35 @@ export function Hook({ dur }: SceneProps) {
             outliers
           </span>
         </span>
-        <Typing t={t} text={tail} at={T.more} cps={19} caret={t >= T.more - 0.25} />
       </div>
+      <Title t={t} at={T.tail} text="before they blow up." y={668} size={64} lift={30} stagger={0.1} />
     </Stage>
   );
 }
 
-/* ------------------------------------------------------------------ 2. Introducing → the name lands above it */
+/* ------------------------------------------------------------------ 2. Introducing: the name lands */
 
 export function Intro({ dur }: SceneProps) {
   const t = useT();
-  const T = { type: 0.12, name: 0.85 };
-  const down = p(t, T.name - 0.05, 1.3);
+  const T = { label: 0.05, name: 0.4, sub: 1.2 };
   const k = p(t, T.name, 1.2);
   const soft = p(t, T.name, 0.7, SOFT);
   return (
-    <Stage
-      t={t}
-      dur={dur}
-      push={0.9}
-      amount={0.14}
-      creep={0.07}
-      origin={[960, 540]}
-    >
-      <Guides
-        t={t}
-        at={T.name}
-        ys={[418, 578]}
-        xs={[572, 1348]}
-        out={T.name + 1.1}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: 500 + 124 * down,
-          height: 80,
-          display: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: 1920,
-          transform: `translate(0px, ${500 + 126 * down}px) scale(${1 - 0.24 * down})`,
-          transformOrigin: "960px 40px",
-          height: 80,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          fontFamily: FONT.display,
-          fontWeight: 500,
-          fontSize: 76,
-          letterSpacing: "-0.02em",
-          color: down > 0.5 ? "rgba(255,255,255,0.72)" : C.text,
-        }}
-      >
-        <Typing
-          t={t}
-          text="Introducing"
-          at={T.type}
-          cps={24}
-          caret={t < T.name}
-        />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: 418,
-          height: 160,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: 26,
-          fontFamily: FONT.display,
-          fontWeight: 800,
-          fontSize: 168,
-          letterSpacing: "-0.03em",
-          color: C.text,
-        }}
-      >
-        <div
-          style={{
-            opacity: p(t, T.name, 0.3, SOFT),
-            filter: soft < 0.995 ? `blur(${(1 - soft) * 16}px)` : undefined,
-            transform: `translate(0px, ${(1 - k) * -40}px) scale(${1.3 - 0.3 * k}) rotate(${(1 - k) * -16}deg)`,
-          }}
-        >
+    <Stage t={t} dur={dur} push={0.3} amount={0.14} creep={0.08} origin={[960, 540]}>
+      <Streaks t={t} at={T.name - 0.15} count={7} seed={11} />
+      <Guides t={t} at={T.name} ys={[430, 590]} xs={[572, 1348]} out={T.name + 1.2} />
+      <GlowRect x={760} y={450} w={400} h={110} spread={420} rgb="109,40,217" a={0.42 * p(t, T.name, 1.2, SOFT)} />
+      <Title t={t} at={T.label} text="Introducing" y={368} size={46} lift={26} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: 430, height: 160, display: "flex", justifyContent: "center", alignItems: "center", gap: 26, fontFamily: FONT.display, fontWeight: 800, fontSize: 168, letterSpacing: "-0.03em", color: C.text }}>
+        <div style={{ opacity: p(t, T.name, 0.3, SOFT), filter: soft < 0.995 ? `blur(${(1 - soft) * 16}px)` : undefined, transform: `translate(0px, ${(1 - k) * -40}px) scale(${1.3 - 0.3 * k}) rotate(${(1 - k) * -16}deg)` }}>
           <LogoMark size={140} />
         </div>
         <GlowIn t={t} at={T.name + 0.08} text="Outlier" stagger={0.06} />
       </div>
-      <Sparkle t={t} at={T.name + 0.15} x={500} y={596} size={84} seed={1} />
-      <Sparkle t={t} at={T.name + 0.3} x={1424} y={400} size={66} seed={2} />
-      <Sparkle
-        t={t}
-        at={T.name + 0.45}
-        x={1380}
-        y={640}
-        size={44}
-        seed={3}
-        color="#f0abfc"
-      />
+      <Title t={t} at={T.sub} text="The outlier finder for |YouTube Shorts" y={672} size={52} lift={30} stagger={0.09} />
+      <Sparkle t={t} at={T.name + 0.15} x={500} y={610} size={84} seed={1} />
+      <Sparkle t={t} at={T.name + 0.3} x={1424} y={410} size={66} seed={2} />
+      <Sparkle t={t} at={T.name + 0.45} x={1400} y={660} size={44} seed={3} color="#f0abfc" />
     </Stage>
   );
 }

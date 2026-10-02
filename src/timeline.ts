@@ -6,8 +6,8 @@
 export const FPS = 60;
 
 const order = [
-  ["hook", 3.9], // "Find trending Shorts" → selected → "Find outliers before they blow up"
-  ["intro", 2.7], // Introducing → Outlier
+  ["hook", 3.5], // a wall of Shorts; "Find trending Shorts" → selected → "Find outliers / before they blow up."
+  ["intro", 2.9], // Introducing → Outlier → what it is
   ["niche", 7.2], // Niche Finder: search "minecraft" → money, top niches, inside Mods
   ["viral", 3.3], // Viral Videos: four real Shorts with their multipliers
   ["analyze", 5.0], // Analyze Any Video: paste, click, 62×

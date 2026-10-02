@@ -32,12 +32,12 @@ const SCENES: [SceneId, ComponentType<{ dur: number }>][] = [
 /** Sound effects: [file, seconds, volume]. A soft whoosh into each scene, clicks on the clicks, a hit on the end card. */
 const SFX: [string, number, number][] = [
   ...SCENES.slice(1).map(([id]): [string, number, number] => ["whoosh", start(id) - 0.1, 0.25]),
-  ["typing", start("hook") + 0.2, 0.35],
-  ["pop", start("hook") + 2.05, 0.3],
-  ["shimmer", start("hook") + 2.3, 0.35],
-  ["typing", start("hook") + 2.85, 0.3],
-  ["subhit", start("intro") + 0.85, 0.7],
-  ["shimmer", start("intro") + 0.9, 0.4],
+  ["shimmer", start("hook") + 0.1, 0.3],
+  ["pop", start("hook") + 1.3, 0.3],
+  ["whoosh", start("hook") + 1.45, 0.25],
+  ["ding", start("hook") + 2.0, 0.3],
+  ["subhit", start("intro") + 0.4, 0.7],
+  ["shimmer", start("intro") + 0.45, 0.4],
   ["typing", start("niche") + 1.35, 0.3],
   ["click", start("niche") + 2.45, 0.5],
   ...[0, 1, 2].map((i): [string, number, number] => ["pop", start("niche") + 2.8 + i * 0.09, 0.22]),
