@@ -1,6 +1,7 @@
 import { type CSSProperties, useEffect, useState } from "react";
 import { AbsoluteFill, Easing, continueRender, delayRender, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { C, FONT, fontsReady } from "../theme";
+import { SmoothMotionBlur } from "../components/blur";
 import { AE_GRAPH_GLIDE, clamp } from "../components/ui";
 import { Finish } from "../components/fx";
 import { Glyph, HandIcon, IconTile, LILAC, LogoMark, Spinner, VIOLET } from "../components/kit";
@@ -123,6 +124,53 @@ function Typing({ t, text, at, cps }: { t: number; text: string; at: number; cps
   );
 }
 
+/**
+ * A soft glow around a rectangle, built only from gradients (edges, corners, centre).
+ * Wide box-shadows and big blur filters both get clipped to hard edges when the picture
+ * is captured for motion blur; gradients come through untouched.
+ */
+function GlowRect({ x, y, w, h, spread, rgb, a }: { x: number; y: number; w: number; h: number; spread: number; rgb: string; a: number }) {
+  const stops = [
+    [0, 1],
+    [0.12, 0.84],
+    [0.25, 0.64],
+    [0.4, 0.42],
+    [0.55, 0.25],
+    [0.7, 0.12],
+    [0.85, 0.04],
+    [1, 0],
+  ]
+    .map(([at, v]) => `rgba(${rgb},${(v * a).toFixed(4)}) ${at * 100}%`)
+    .join(", ");
+  const s = spread;
+  const piece = (left: number, top: number, width: number, height: number, background: string) => <div style={{ position: "absolute", left, top, width, height, background }} />;
+  return (
+    <>
+      {piece(x, y, w, h, `rgba(${rgb},${a})`)}
+      {piece(x, y - s, w, s, `linear-gradient(0deg, ${stops})`)}
+      {piece(x, y + h, w, s, `linear-gradient(180deg, ${stops})`)}
+      {piece(x - s, y, s, h, `linear-gradient(270deg, ${stops})`)}
+      {piece(x + w, y, s, h, `linear-gradient(90deg, ${stops})`)}
+      {piece(x - s, y - s, s, s, `radial-gradient(circle ${s}px at 100% 100%, ${stops})`)}
+      {piece(x + w, y - s, s, s, `radial-gradient(circle ${s}px at 0% 100%, ${stops})`)}
+      {piece(x - s, y + h, s, s, `radial-gradient(circle ${s}px at 100% 0%, ${stops})`)}
+      {piece(x + w, y + h, s, s, `radial-gradient(circle ${s}px at 0% 0%, ${stops})`)}
+    </>
+  );
+}
+
+/** The card's bloom: a wide soft pool (sitting a little low, like a light under the card) and a tight bright halo. */
+function Bloom({ t }: { t: number }) {
+  const k = p(t, T.card, 1.5, RISE);
+  const glow = (0.45 + 0.55 * p(t, T.push, 1.6, SINE)) * p(t, T.card + 0.1, 0.7, Easing.out(Easing.quad));
+  return (
+    <div style={{ position: "absolute", left: 0, top: 0, transform: `translate(0px, ${(1 - k) * 300}px)` }}>
+      <GlowRect x={CARD.x + 70} y={CARD.y + 90} w={CARD.w - 140} h={CARD.h - 130} spread={250} rgb="109,40,217" a={0.7 * glow} />
+      <GlowRect x={CARD.x + 26} y={CARD.y + 26} w={CARD.w - 52} h={CARD.h - 52} spread={64} rgb={VIOLET} a={0.85 * glow} />
+    </div>
+  );
+}
+
 function Card({ t }: { t: number }) {
   const k = p(t, T.card, 1.5, RISE);
   const clear = p(t, T.card, 0.8, Easing.out(Easing.quad));
@@ -145,8 +193,8 @@ function Card({ t }: { t: number }) {
         transform: `perspective(1500px) translateY(${(1 - k) * 420}px) rotateX(${5 + (1 - k) * 39}deg) rotateY(${-2 * k}deg)`,
       }}
     >
-      {/* Bloom on its own layer, so only opacity animates. */}
-      <div style={{ position: "absolute", inset: 0, borderRadius: 30, opacity: glow, boxShadow: `0 0 0 2px rgba(${VIOLET},0.9), 0 0 26px 2px rgba(${VIOLET},0.75), 0 0 110px 10px rgba(124,58,237,0.5), 0 60px 130px 0px rgba(109,40,217,0.5)` }} />
+      {/* Bright edge ring, tilting with the card. */}
+      <div style={{ position: "absolute", inset: -3, borderRadius: 33, background: `rgba(${VIOLET},1)`, opacity: glow }} />
       <div style={{ position: "absolute", inset: 0, borderRadius: 30, background: "linear-gradient(180deg, #0c0b14 0%, #07070c 100%)", border: `1px solid rgba(${LILAC},0.22)`, overflow: "hidden" }}>
         <div style={{ position: "absolute", left: 34, top: 26, width: 44, height: 44, borderRadius: 12, border: "1px solid rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.05)", display: "grid", placeItems: "center" }}>
           <LogoMark size={28} />
@@ -210,7 +258,9 @@ function Pointer({ t }: { t: number }) {
   );
 }
 
-export function SceneTest() {
+export type SceneTestProps = { motionBlur: number };
+
+export function SceneTest({ motionBlur }: SceneTestProps) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = frame / fps;
@@ -225,14 +275,28 @@ export function SceneTest() {
   const c = Math.max(0, t - (T.push + 0.7));
   const zoom = 1 + 0.36 * move + 0.1 * (c - (1 - Math.exp(-c * 3)) / 3);
 
-  return (
-    <AbsoluteFill style={{ background: "#05040c" }}>
+  const picture = (
+    <AbsoluteFill>
       <Bands t={t} />
       <AbsoluteFill style={{ transformOrigin: `${ORIGIN.x}px ${ORIGIN.y}px`, transform: `scale(${zoom})` }}>
         <Title t={t} />
+        <Bloom t={t} />
         <Card t={t} />
         <Pointer t={t} />
       </AbsoluteFill>
+    </AbsoluteFill>
+  );
+
+  return (
+    <AbsoluteFill style={{ background: "#05040c" }}>
+      {/* A light shutter (120°): enough to soften fast moves without smearing the text. */}
+      {motionBlur > 0 ? (
+        <SmoothMotionBlur samples={motionBlur} shutterAngle={120}>
+          {picture}
+        </SmoothMotionBlur>
+      ) : (
+        picture
+      )}
       <Finish grain={0.07} />
     </AbsoluteFill>
   );
