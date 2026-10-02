@@ -9,7 +9,7 @@ const order = [
   ["intro", 7.0], // f0–f419, rebuilt shot for shot from SPEC.md (src/film/intro.tsx)
   ["niche", 7.2], // Niche Finder: search "minecraft" → money, top niches, inside Mods
   ["viral", 3.3], // Viral Videos: four real Shorts with their multipliers
-  ["analyze", 5.0], // Analyze Any Video: paste, click, 62×
+  ["analyze", 6.4], // Analyze Any Video: paste a link → verdict, five tiles, the channel chart
   ["script", 4.8], // Script Writer: a mini script written out
   ["tracked", 3.2], // Track any Channel: Kopee
   ["end", 2.8], // logo + URL

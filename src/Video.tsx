@@ -49,9 +49,9 @@ const SFX: [string, number, number][] = [
   ["click", start("script") + 2.0, 0.5],
   ["typing", start("script") + 2.3, 0.3],
   ...[0, 1, 2, 3].map((i): [string, number, number] => ["pop", start("viral") + 1.5 + i * 0.12, 0.25]),
-  ["typing", start("analyze") + 1.9, 0.35],
-  ["click", start("analyze") + 3.25, 0.5],
-  ["ding", start("analyze") + 4.05, 0.35],
+  ["typing", start("analyze") + 1.3, 0.35],
+  ["click", start("analyze") + 2.3, 0.5],
+  ["ding", start("analyze") + 2.85, 0.35],
   ["subhit", start("end") + 0.1, 0.8],
   ["shimmer", start("end") + 0.05, 0.4],
 ];
@@ -106,8 +106,8 @@ export type LaunchProps = {
   lightLeaks?: boolean;
 };
 
-/** A light shutter: enough to soften fast moves without smearing the text. */
-const SHUTTER = 120;
+/** Shutter angle for the final render. 250° at 60 fps is about what a 180° shutter gives at 43 fps: clearly visible on fast moves. */
+const SHUTTER = 250;
 
 function useFonts() {
   const [handle] = useState(() => delayRender("fonts"));

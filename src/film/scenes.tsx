@@ -402,161 +402,126 @@ export function ViralVideos({ dur }: SceneProps) {
   );
 }
 
-/* ------------------------------------------------------------------ 5. Analyze Video */
+/* ------------------------------------------------------------------ 5. Analyze Video: paste a link, then the real report layout */
+
+// Laid out like the app's Analyze page (app/analyze/page.tsx in the Outlier repo): hero with the verdict,
+// five tiles, then the video among the channel's recent uploads. Views, subscribers and the 62× are from
+// the app's Minecraft report; the typical-Short figure and reach follow from them; the rest are example values.
+const AZ_TILES: [string, string, string, string][] = [
+  ["Views", "1.6M", "+41K in the last day", "#c4b5fd"],
+  ["Views a day", "118K", "channel's usual 2.1K", "#93c5fd"],
+  ["Reach", "50×", "views per subscriber", "#f9a8d4"],
+  ["Like rate", "4.8%", "channel's usual 3.1%", "#6ee7b7"],
+  ["Comments", "2.3K", "3.2× the channel's usual rate", "#fcd34d"],
+];
+// The channel's recent Shorts, oldest to newest, as a share of the chart's height. The last one is this video (cut off, as in the app).
+const AZ_BARS = [0.16, 0.22, 0.12, 0.3, 0.18, 0.14, 0.42, 0.2, 0.16, 0.26, 0.12, 0.34, 0.18, 0.22, 0.15, 0.58, 0.2, 0.17, 0.28, 0.14, 0.24, 0.19, 0.31, 1];
 
 export function AnalyzeVideo({ dur }: SceneProps) {
   const t = useT();
-  const card: Box = { x: 506, y: 403, w: 908, h: 504 };
-  const T = {
-    title: 0.15,
-    card: 0.78,
-    push: 1.45,
-    type: 1.9,
-    hand: 2.45,
-    click: 3.25,
-    result: 4.05,
-  };
-  const lit = 0.45 + 0.55 * p(t, T.push, 1.6, SINE);
-  const busy =
-    p(t, T.click + 0.1, 0.6) * (1 - p(t, T.result - 0.1, 0.35, SOFT));
-  const rk = p(t, T.result, 1.2);
+  const bar: Box = { x: 460, y: 470, w: 1000, h: 104 };
+  const T = { title: 0.15, bar: 0.78, type: 1.3, hand: 1.6, click: 2.3, go: 2.35, hero: 2.55, tiles: 2.95, chart: 3.4, bars: 3.65, flag: 4.5 };
+  const go = p(t, T.go, 1.4);
+  const lift = -322 * go;
+  // Camera: in on the bar while the link is typed, back out as the report arrives, then a slow creep.
+  const zoom = 1 + 0.42 * p(t, 1.15, 1.1, Easing.bezier(0.4, 0, 0.2, 1)) - 0.38 * p(t, T.click + 0.05, 1.5) + 0.014 * Math.max(0, t - 3.4);
+  const hero: Box = { x: 260, y: 272, w: 1400, h: 228 };
+  const chart: Box = { x: 260, y: 692, w: 1400, h: 300 };
+  const tileW = (1400 - 4 * 16) / 5;
+  const median = 0.2; // the "typical" line, as a share of the chart's height
   return (
-    <Stage t={t} dur={dur} push={T.push} amount={0.22} creep={0.06}>
-      <Title
-        t={t}
-        at={T.title}
-        text="Analyze| Any Video"
-        icon={icon(Glyph.chart(30))}
-        yPushed={354}
-        pushAt={T.card}
-      />
-      <Bloom
-        t={t}
-        box={card}
-        at={T.card}
-        strength={lit + 0.35 * p(t, T.result, 0.8, SOFT)}
-      />
-      <Rise t={t} at={T.card} box={card} ring={lit}>
-        <Face>
-          <div
-            style={{
-              position: "absolute",
-              left: 34,
-              top: 26,
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.22)",
-              background: "rgba(255,255,255,0.05)",
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            <LogoMark size={28} />
-          </div>
-          <div
-            style={{ position: "absolute", right: 38, top: 34, opacity: 0.85 }}
-          >
-            {Glyph.bell(26)}
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              left: 34,
-              right: 34,
-              top: 96,
-              bottom: 104,
-              borderRadius: 18,
-              border: "1px solid rgba(255,255,255,0.1)",
-              background: "rgba(255,255,255,0.025)",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                left: 28,
-                top: 24,
-                fontFamily: FONT.body,
-                opacity: 1 - p(t, T.click + 0.1, 0.6),
-              }}
-            >
-              {t >= T.type ? (
-                <span
-                  style={{
-                    fontSize: 30,
-                    fontWeight: 500,
-                    color: C.text,
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  <Typing t={t} text="youtube.com/shorts/x7Kq2" at={T.type} />
-                </span>
-              ) : (
-                <span style={{ ...label, fontSize: 17 }}>
-                  Paste any Short link to see why it went viral …
-                </span>
-              )}
-            </div>
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "grid",
-                placeItems: "center",
-                opacity: busy,
-                transform: `scale(${0.7 + 0.3 * busy})`,
-              }}
-            >
-              <Spinner size={72} />
-            </div>
-            {/* The answer: one big number. */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: p(t, T.result, 0.45, SOFT),
-                transform: `translate(0px, ${(1 - rk) * 24}px)`,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: FONT.display,
-                  fontWeight: 800,
-                  fontSize: 150,
-                  letterSpacing: "-0.03em",
-                  lineHeight: 1,
-                  color: C.text,
-                }}
-              >
-                <GlowIn t={t} at={T.result} text="62×" stagger={0.1} />
+    <Stage t={t} dur={dur} push={0} amount={0} creep={0} origin={[960, 540]}>
+      <div style={{ position: "absolute", inset: 0, transformOrigin: "960px 525px", transform: `scale(${zoom})` }}>
+        <div style={{ opacity: 1 - p(t, T.go, 0.5, SOFT), transform: `translate(0px, ${lift * 0.5}px)` }}>
+          <Title t={t} at={T.title} text="Analyze| Any Video" icon={icon(Glyph.chart(30))} yPushed={356} pushAt={T.bar} />
+        </div>
+
+        {/* the form: a link and the Analyze button, as in the app */}
+        <div style={{ position: "absolute", inset: 0, transform: `translate(0px, ${lift}px)` }}>
+          <Bloom t={t} box={bar} at={T.bar} strength={0.7 - 0.3 * go} travel={220} wide={200} />
+          <Rise t={t} at={T.bar} box={bar} from={320} tilt={36} rest={0} yaw={0} radius={26} ring={0.6}>
+            <Face radius={26}>
+              <div style={{ position: "absolute", left: 34, top: 0, bottom: 0, display: "flex", alignItems: "center", gap: 18, fontFamily: FONT.body, fontWeight: 500, fontSize: 32, color: C.text }}>
+                {Glyph.yt(38)}
+                {t < T.type ? <span style={{ ...label, fontWeight: 400 }}>https://www.youtube.com/watch?v=…</span> : <Typing t={t} text="youtube.com/shorts/x7Kq2mD9" at={T.type} cps={30} hold={0.4} />}
               </div>
-              <div style={{ ...label, fontSize: 22, marginTop: 8 }}>
-                <span style={{ color: ACCENT, fontWeight: 700 }}>
-                  outlier score
-                </span>{" "}
-                · 1.6M views on a 31.9K-sub channel
-              </div>
-            </div>
+              <Button pressed={t >= T.click && t < T.click + 0.14} style={{ position: "absolute", right: 22, top: 22, height: 60, fontSize: 22, padding: "0 30px" }}>
+                Analyze
+              </Button>
+            </Face>
+          </Rise>
+        </div>
+
+        {/* hero: the video and the verdict */}
+        <Panel t={t} at={T.hero} box={hero}>
+          <Img src={staticFile("footage/mc-3.jpg")} style={{ position: "absolute", left: 22, top: 22, width: 116, height: 184, objectFit: "cover", borderRadius: 14 }} />
+          <div style={{ position: "absolute", left: 164, top: 22, right: 480, fontFamily: FONT.display, fontWeight: 700, fontSize: 28, color: C.text, lineHeight: 1.18, letterSpacing: "-0.01em" }}>This Minecraft Mod Was Going To Replace 40 Mods… Then It Got BANNED</div>
+          <div style={{ position: "absolute", left: 164, top: 104, display: "flex", alignItems: "center", gap: 16, ...label, fontSize: 19 }}>
+            <span style={{ color: C.text, fontWeight: 600 }}>GalaxiHD</span>
+            <span>31.9K subs</span>
+            <span>3 days ago</span>
+            <span>0:38</span>
+            <span style={{ padding: "3px 12px", borderRadius: 99, border: "1px solid rgba(255,255,255,0.2)", color: C.text, fontSize: 16 }}>Short</span>
           </div>
-          <Button
-            pressed={t >= T.click && t < T.click + 0.14}
-            style={{ position: "absolute", right: 34, bottom: 30 }}
-          >
-            Analyze video
-          </Button>
-        </Face>
-      </Rise>
-      <Pointer
-        t={t}
-        at={T.hand}
-        click={T.click}
-        x={card.x + card.w - 100}
-        y={card.y + card.h - 52}
-      />
+          <div style={{ position: "absolute", left: 164, top: 150, ...label, fontSize: 18, opacity: p(t, T.hero + 0.7, 0.6, SOFT) }}>
+            vs the channel's typical Short (26K views) · #1 of its last 24 Shorts
+          </div>
+          <div style={{ position: "absolute", right: 30, top: 26, width: 430, textAlign: "right" }}>
+            <div style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: 104, letterSpacing: "-0.03em", lineHeight: 1, color: "#6ee7b7", whiteSpace: "nowrap" }}>
+              <GlowIn t={t} at={T.hero + 0.3} text="62×" stagger={0.09} glow="52,211,153" />
+            </div>
+            <div style={{ fontFamily: FONT.body, fontWeight: 700, fontSize: 20, color: C.text, marginTop: 10, opacity: p(t, T.hero + 0.7, 0.6, SOFT) }}>Breakout: far above this channel's normal.</div>
+          </div>
+        </Panel>
+
+        {/* five tiles */}
+        {AZ_TILES.map(([name, value, note, tone], i) => (
+          <Panel key={name} t={t} at={T.tiles + i * 0.07} box={{ x: 260 + i * (tileW + 16), y: 516, w: tileW, h: 160 }}>
+            <div style={{ position: "absolute", left: 22, top: 18, ...label, fontSize: 18 }}>{name}</div>
+            <div style={{ position: "absolute", left: 22, top: 46, fontFamily: FONT.display, fontWeight: 800, fontSize: 52, letterSpacing: "-0.03em", color: tone, whiteSpace: "nowrap" }}>
+              <GlowIn t={t} at={T.tiles + 0.25 + i * 0.09} text={value} stagger={0.045} />
+            </div>
+            <div style={{ position: "absolute", left: 22, right: 12, top: 116, ...label, fontSize: 16, whiteSpace: "nowrap", opacity: p(t, T.tiles + 0.6 + i * 0.09, 0.6, SOFT) }}>{note}</div>
+          </Panel>
+        ))}
+
+        {/* this video among the channel's recent Shorts */}
+        <Panel t={t} at={T.chart} box={chart} from={200}>
+          <div style={{ position: "absolute", left: 26, top: 20, fontFamily: FONT.display, fontWeight: 700, fontSize: 24, color: C.text }}>Against the channel's recent Shorts</div>
+          <div style={{ position: "absolute", right: 26, top: 24, display: "flex", gap: 22, ...label, fontSize: 17 }}>
+            <span>
+              <span style={{ color: ACCENT }}>■</span> Views
+            </span>
+            <span>┄ Typical · 26K</span>
+          </div>
+          <div style={{ position: "absolute", left: 26, right: 26, top: 74, bottom: 24 }}>
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: `${median * 100}%`, borderTop: "2px dashed rgba(255,255,255,0.35)", transformOrigin: "0 50%", transform: `scaleX(${p(t, T.bars, 1.0)})` }} />
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", gap: 10 }}>
+              {AZ_BARS.map((v, i) => {
+                const self = i === AZ_BARS.length - 1;
+                const k = p(t, T.bars + i * 0.03, 1.0);
+                return (
+                  <div key={i} style={{ position: "relative", flex: 1, height: `${v * 100}%`, borderRadius: "6px 6px 2px 2px", background: self ? "linear-gradient(180deg, #6ee7b7, #34d399)" : v >= median ? `rgba(${LILAC},0.75)` : `rgba(${LILAC},0.3)`, transformOrigin: "50% 100%", transform: `scaleY(${k})` }} />
+                );
+              })}
+            </div>
+            <div style={{ position: "absolute", right: 64, top: 6, padding: "6px 14px", borderRadius: 99, background: "#0c1f18", border: "1px solid rgba(52,211,153,0.6)", color: "#6ee7b7", fontFamily: FONT.body, fontWeight: 700, fontSize: 18, whiteSpace: "nowrap", opacity: Math.min(1, p(t, T.flag, 0.8) * 2.5), transform: `translate(${(1 - p(t, T.flag, 0.8)) * 24}px, 0px)` }}>This one · 1.6M</div>
+          </div>
+        </Panel>
+
+        <Arrow
+          t={t}
+          size={36}
+          clicks={[T.click]}
+          path={[
+            [T.hand, bar.x + 640, bar.y + 330],
+            [T.click, bar.x + bar.w - 110, bar.y + 56],
+            [3.3, bar.x + bar.w - 110, bar.y + 56],
+            [4.4, 1500, 628],
+            [6.5, 1520, 640],
+          ]}
+        />
+      </div>
     </Stage>
   );
 }
@@ -683,7 +648,6 @@ export function TrackedChannels({ dur }: SceneProps) {
   });
   const at = (i: number) => T.cards + i * 0.1;
   const draw = p(t, at(0) + 0.5, 1.6, Easing.bezier(0.3, 0, 0.2, 1));
-  const live = p(t, at(1) + 0.5, 0.9);
   return (
     <Stage
       t={t}
@@ -811,22 +775,6 @@ export function TrackedChannels({ dur }: SceneProps) {
               }}
             >
               Kopee
-            </div>
-            <div
-              style={{
-                padding: "8px 18px",
-                borderRadius: 999,
-                background: "rgba(52,211,153,0.14)",
-                border: "1px solid rgba(52,211,153,0.45)",
-                color: "#6ee7b7",
-                fontFamily: FONT.body,
-                fontWeight: 700,
-                fontSize: 19,
-                opacity: Math.min(1, live * 3),
-                transform: `scale(${0.7 + 0.3 * live})`,
-              }}
-            >
-              ● Breaking out
             </div>
             <div style={{ ...label, fontSize: 19, marginTop: -4 }}>63.4K subs · gaming · minecraft</div>
           </div>

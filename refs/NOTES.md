@@ -306,3 +306,14 @@ that Short's card, "Analyze video" clicked → blur hand-off into Niche Finder a
 
 "Stop guessing. Find the outliers." is gone; Tracked Channels hands straight to the end card.
 Final-quality stills (motion blur 8 samples, 120° shutter, `props/final.json`) checked at f30, f186, f900, f1830.
+
+## v16: Analyze Video rebuilt from the app's real page (34.7s)
+
+Source: `app/analyze/page.tsx` in the public `detailedbynate/outlier` repo. The scene now follows that
+page: the link form, a hero (thumbnail, title, channel meta, verdict with the outlier score and the app's
+own wording), five tiles (Views, Views a day, Reach, Like rate, Comments) and "Against the channel's
+recent Shorts" with the typical line and this video flagged.
+Real: 1.6M views, 31.9K subs, 62×, title, channel. Derived: typical Short ≈ 26K (1.6M ÷ 62), reach 50×
+(1.6M ÷ 31.9K). Example values: views a day, like rate, comments, "3 days ago", 0:38, rank, bar heights.
+Also: "Breaking out" pill removed from Tracked Channels. Final render: shutter 250°, 12 samples (was 120°, 8).
+The draft and final mp4s are no longer tracked in git.
