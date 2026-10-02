@@ -18,11 +18,11 @@ import { Glyph, HandIcon, IconTile, LILAC, LogoMark, Spinner, VIOLET } from "../
  *   1.77  typing starts; 2.95 click; spinner
  */
 
-export const SCENE_TEST_SECONDS = 3.8;
+export const SCENE_TEST_SECONDS = 4.6;
 
 const GLIDE = AE_GRAPH_GLIDE;
 /** The card/title rise: a soft start, then a long settle (fitted to the reference: 27% at 0.1s, 57% at 0.2s, 74% at 0.3s). */
-const RISE = Easing.bezier(0.3, 0.45, 0.25, 1);
+const RISE = GLIDE;
 const SINE = Easing.bezier(0.37, 0, 0.63, 1);
 
 const p = (t: number, at: number, dur: number, easing: (n: number) => number = GLIDE) => interpolate(t, [at, at + dur], [0, 1], { ...clamp, easing });
@@ -34,7 +34,7 @@ const TITLE_Y1 = 564; // after its own rise
 const TITLE_Y2 = 354; // after the card pushes it up
 const ORIGIN = { x: 960, y: 800 }; // the push-in zooms about this point
 
-const T = { words: 0.15, icon: 0.75, card: 1.0, push: 1.42, type: 1.77, hand: 2.25, click: 2.95 };
+const T = { words: 0.15, icon: 0.95, card: 1.25, push: 1.9, type: 2.35, hand: 2.9, click: 3.7 };
 
 function Bands({ t }: { t: number }) {
   const band = (x: number, w: number, rot: number, a: number, v: number, i: number): CSSProperties => ({
@@ -58,15 +58,17 @@ function Bands({ t }: { t: number }) {
 }
 
 function TitleWord({ t, at, children, accent = false }: { t: number; at: number; children: string; accent?: boolean }) {
-  const k = p(t, at, 0.55);
+  const k = p(t, at, 1.3); // position: fast out of the gate, very long settle
+  const soft = p(t, at, 1.0, Easing.out(Easing.quad)); // blur clears slowly, so the word stays soft while it lands
+  const fade = p(t, at, 0.45, Easing.out(Easing.quad));
   return (
     <span
       style={{
         display: "inline-block",
         marginRight: "0.26em",
-        opacity: Math.min(1, k * 1.5),
-        filter: k < 0.995 ? `blur(${(1 - k) * 12}px)` : undefined,
-        transform: `translate(${(1 - k) * 34}px, ${(1 - k) * 22}px) rotate(${(1 - k) * 3.5}deg)`,
+        opacity: fade,
+        filter: soft < 0.995 ? `blur(${(1 - soft) * 18}px)` : undefined,
+        transform: `translate(${(1 - k) * 70}px, ${(1 - k) * 40}px) rotate(${(1 - k) * 4}deg)`,
         color: accent ? "#9d6bff" : C.text,
       }}
     >
@@ -76,24 +78,25 @@ function TitleWord({ t, at, children, accent = false }: { t: number; at: number;
 }
 
 function Title({ t }: { t: number }) {
-  const rise = p(t, T.words + 0.05, 0.85);
-  const pushed = p(t, T.card + 0.08, 0.72, RISE);
+  const rise = p(t, T.words, 1.5);
+  const pushed = p(t, T.card + 0.06, 1.5, RISE);
   const y = TITLE_Y0 + (TITLE_Y1 - TITLE_Y0) * rise + (TITLE_Y2 - TITLE_Y1) * pushed;
-  const s = 1.15 - 0.15 * p(t, T.words, 1.25, Easing.out(Easing.cubic));
-  const icon = p(t, T.icon, 0.5, Easing.bezier(0.34, 1.4, 0.64, 1));
+  const s = 1.15 - 0.15 * p(t, T.words, 1.8);
+  const icon = p(t, T.icon, 1.0);
+  const iconSoft = p(t, T.icon, 0.7, Easing.out(Easing.quad));
   return (
     <div style={{ position: "absolute", left: 0, top: 0, width: 1920, height: 0, transform: `translate(0px, ${y}px) scale(${s})`, transformOrigin: "960px 0px" }}>
       <div style={{ position: "absolute", left: 0, right: 0, top: -40, height: 80, display: "flex", justifyContent: "center", alignItems: "center", fontFamily: FONT.display, fontWeight: 700, fontSize: 62, letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>
         <TitleWord t={t} at={T.words} accent>
           Analyze
         </TitleWord>
-        <TitleWord t={t} at={T.words + 0.09}>
+        <TitleWord t={t} at={T.words + 0.13}>
           Any
         </TitleWord>
-        <TitleWord t={t} at={T.words + 0.18}>
+        <TitleWord t={t} at={T.words + 0.26}>
           Video
         </TitleWord>
-        <span style={{ display: "inline-flex", marginLeft: 4, opacity: Math.min(1, icon * 2), transform: `translate(0px, -12px) scale(${0.3 + 0.7 * icon}) rotate(${12 - (1 - icon) * 40}deg)` }}>
+        <span style={{ display: "inline-flex", marginLeft: 4, opacity: Math.min(1, iconSoft * 2), filter: iconSoft < 0.995 ? `blur(${(1 - iconSoft) * 10}px)` : undefined, transform: `translate(${(1 - icon) * 30}px, ${-12 + (1 - icon) * 26}px) scale(${0.4 + 0.6 * icon}) rotate(${12 - (1 - icon) * 40}deg)` }}>
           <IconTile size={52}>{Glyph.chart(30)}</IconTile>
         </span>
       </div>
@@ -120,10 +123,11 @@ function Typing({ t, text, at, cps }: { t: number; text: string; at: number; cps
 }
 
 function Card({ t }: { t: number }) {
-  const k = p(t, T.card, 0.72, RISE);
-  const glow = 0.45 + 0.55 * p(t, T.push, 1.4, SINE);
+  const k = p(t, T.card, 1.5, RISE);
+  const clear = p(t, T.card, 0.8, Easing.out(Easing.quad));
+  const glow = 0.45 + 0.55 * p(t, T.push, 1.6, SINE);
   const typed = t >= T.type;
-  const busy = p(t, T.click + 0.1, 0.35);
+  const busy = p(t, T.click + 0.1, 0.6);
   const press = t >= T.click && t < T.click + 0.14;
   return (
     <div
@@ -133,7 +137,8 @@ function Card({ t }: { t: number }) {
         top: CARD.y,
         width: CARD.w,
         height: CARD.h,
-        opacity: p(t, T.card, 0.22, Easing.linear),
+        opacity: p(t, T.card, 0.4, Easing.out(Easing.quad)),
+        filter: clear < 0.995 ? `blur(${(1 - clear) * 14}px)` : undefined,
         transformOrigin: "50% 100%",
         // Rises 420px while un-tilting from 44° to a resting 5°, like the reference's card.
         transform: `perspective(1500px) translateY(${(1 - k) * 420}px) rotateX(${5 + (1 - k) * 39}deg) rotateY(${-2 * k}deg)`,
@@ -190,7 +195,7 @@ function Card({ t }: { t: number }) {
 
 function Pointer({ t }: { t: number }) {
   if (t < T.hand) return null;
-  const k = p(t, T.hand, T.click - T.hand, Easing.bezier(0.3, 0, 0.2, 1));
+  const k = p(t, T.hand, T.click - T.hand + 0.25);
   const tx = CARD.x + CARD.w - 100;
   const ty = CARD.y + CARD.h - 52;
   const x = tx - 330 + 330 * k;
@@ -215,9 +220,9 @@ export function SceneTest() {
 
   // The push-in, fitted to the reference: it takes over while the card is still settling
   // (1→1.36× in ~0.8s, soft start, long tail) and then never stops (+13%/s creep).
-  const move = p(t, T.push, 0.85, Easing.bezier(0.35, 0.4, 0.3, 1));
-  const c = Math.max(0, t - (T.push + 0.3));
-  const zoom = 1 + 0.36 * move + 0.13 * (c - (1 - Math.exp(-c * 4)) / 4);
+  const move = p(t, T.push, 1.5, Easing.bezier(0.4, 0, 0.2, 1));
+  const c = Math.max(0, t - (T.push + 0.7));
+  const zoom = 1 + 0.36 * move + 0.1 * (c - (1 - Math.exp(-c * 3)) / 3);
 
   return (
     <AbsoluteFill style={{ background: "#05040c" }}>
