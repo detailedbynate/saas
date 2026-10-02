@@ -205,3 +205,26 @@ Client-supplied rules, applied with one exception:
 - **Not applied: `translate3d` / `scale3d`.** That is advice for live browser playback.
   Remotion renders frame by frame, and v6.1 measured `translate3d` as the cause of the text
   stutter (per-letter layers re-rasterised in steps under zoom). Transforms stay 2D.
+
+## v8: the whole film in the agreed test-scene style (28s)
+
+Process: one scene ("Analyze Any Video") was matched frame by frame to Algrow's "Ai Voice
+Generator" moment and tuned with the client until approved; that motion was then applied
+everywhere (`src/film/kit.tsx`, `src/film/scenes.tsx`).
+
+The approved moves:
+- Words resolve one at a time from a long blur (position on `AE_GRAPH_GLIDE` over 1.3s, blur
+  clearing on its own slower curve over 1.0s), sliding in from down-right.
+- Every entrance is on the graph curve and lasts 1.0–1.5s.
+- The next thing enters while the last is still landing (card at +0.63s after the title);
+  motion never comes to rest.
+- Cards rise from below tilted back (44° → 5°) and push the title up.
+- The camera push starts while the card settles and never stops; a 1.5%/s drift runs from frame 0.
+- Scenes hand off with a 0.25s fade/blur while still pushing in; the next scene starts 0.2s early.
+
+Scenes: prompt → scanning → Niche Finder → Viral Videos → Analyze Any Video → Tracked
+Channels → dashboard (real screenshot) → tagline → end card.
+
+Motion blur: `SmoothMotionBlur` (`src/components/blur.tsx`), 120° shutter. Do not use
+`<HtmlInCanvasMotionBlur>`: its captured samples render faint semi-transparent glows brighter
+and hard-edged (worse with each sample). Glows are gradients (`GlowRect`), not wide box-shadows.

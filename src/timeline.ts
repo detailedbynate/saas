@@ -1,27 +1,33 @@
 /**
- * Shot timing in seconds (v7). Simple scenes, one idea each: a hook, the problem,
- * the logo on the music drop, four features, "in any niche", the dashboard, the
- * tagline and the end card.
- *
- * Shots are centred on their boundaries: each Sequence starts LEAD (0.3s) early and
- * transitions straddle the boundary. Music (scripts/make_audio.py) is 120 BPM; the drop
- * lands on the logo (8s), the breakdown on the tagline (28s), the last hit on the end card (30.5s).
+ * Scene timing in seconds (v8). Nine short scenes, one idea each, all moving the way the
+ * agreed test scene does (src/film/kit.tsx): a prompt, a scan beat, four features, the
+ * real dashboard, the tagline and the end card. Scenes butt up against each other; each
+ * hands off in its last 0.25s.
  */
 export const FPS = 60;
 
-export const SHOTS = {
-  hook: { at: 0, dur: 3 }, // "Going viral / isn't luck."
-  multiply: { at: 3, dur: 3 }, // one Short becomes many
-  turn: { at: 6, dur: 4 }, // "A few break out." → orbs gather → logo at 8s
-  niche: { at: 10, dur: 3 }, // Niche Finder
-  viral: { at: 13, dur: 3 }, // Viral Videos
-  analyze: { at: 16, dur: 3.5 }, // Analyze Video
-  tracked: { at: 19.5, dur: 3 }, // Tracked Channels
-  any: { at: 22.5, dur: 2.5 }, // In any niche
-  dash: { at: 25, dur: 3 }, // the dashboard
-  tagline: { at: 28, dur: 2.5 }, // Less guessing. More outliers.
-  end: { at: 30.5, dur: 3 }, // logo + URL
-} as const;
+const order = [
+  ["prompt", 2.7], // "find breakout Shorts in minecraft"
+  ["scan", 1.3], // Scanning millions of Shorts
+  ["niche", 3.4], // Niche Finder: collage + views counter
+  ["viral", 3.4], // Viral Videos: four Shorts with their multipliers
+  ["analyze", 5.4], // Analyze Any Video: paste, click, 79×
+  ["tracked", 3.4], // Tracked Channels: three stat cards
+  ["dash", 3.4], // the real dashboard
+  ["tagline", 2.5], // Stop guessing. Find the outliers.
+  ["end", 2.8], // logo + URL
+] as const;
 
-export const TOTAL_SECONDS = SHOTS.end.at + SHOTS.end.dur;
-export const TOTAL_FRAMES = TOTAL_SECONDS * FPS;
+export type SceneId = (typeof order)[number][0];
+
+let clock = 0;
+export const SHOTS = Object.fromEntries(
+  order.map(([id, dur]) => {
+    const at = clock;
+    clock = Math.round((clock + dur) * 100) / 100;
+    return [id, { at, dur }];
+  }),
+) as Record<SceneId, { at: number; dur: number }>;
+
+export const TOTAL_SECONDS = clock;
+export const TOTAL_FRAMES = Math.round(TOTAL_SECONDS * FPS);
