@@ -301,3 +301,8 @@ that Short's card, "Analyze video" clicked → blur hand-off into Niche Finder a
   Morphs take ~0.45–0.5 s instead of ~0.25 s; the camera no longer kicks in as the library opens.
 - Removed the decoding ("scramble") words and the "Soon" tag. Script Writer writes one mini script
   into a single text area instead of HOOK / BEATS / PAYOFF blocks; scene lengthened to 4.8 s.
+
+## v15: tagline scene removed (33.3s)
+
+"Stop guessing. Find the outliers." is gone; Tracked Channels hands straight to the end card.
+Final-quality stills (motion blur 8 samples, 120° shutter, `props/final.json`) checked at f30, f186, f900, f1830.

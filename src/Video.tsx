@@ -3,7 +3,7 @@ import { type ComponentType, useEffect, useState } from "react";
 import { SmoothMotionBlur } from "./components/blur";
 import { Finish } from "./components/fx";
 import { GradientStage, INTRO_FRAMES, Intro, introLight } from "./film/intro";
-import { AnalyzeVideo, End, NicheFinder, ScriptWriter, Tagline, TrackedChannels, ViralVideos } from "./film/scenes";
+import { AnalyzeVideo, End, NicheFinder, ScriptWriter, TrackedChannels, ViralVideos } from "./film/scenes";
 import { fontsReady } from "./theme";
 import { FPS, SHOTS, type SceneId, TOTAL_FRAMES } from "./timeline";
 
@@ -23,7 +23,6 @@ const SCENES: [SceneId, ComponentType<{ dur: number }>][] = [
   ["analyze", AnalyzeVideo],
   ["script", ScriptWriter],
   ["tracked", TrackedChannels],
-  ["tagline", Tagline],
   ["end", End],
 ];
 
@@ -53,7 +52,6 @@ const SFX: [string, number, number][] = [
   ["typing", start("analyze") + 1.9, 0.35],
   ["click", start("analyze") + 3.25, 0.5],
   ["ding", start("analyze") + 4.05, 0.35],
-  ["shimmer", start("tagline") + 0.1, 0.35],
   ["subhit", start("end") + 0.1, 0.8],
   ["shimmer", start("end") + 0.05, 0.4],
 ];

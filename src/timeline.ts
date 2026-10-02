@@ -1,7 +1,7 @@
 /**
- * Scene timing in seconds (v9). Nine short scenes, one idea each (src/film): a typed hook,
- * the name reveal, four features, the real dashboard, the tagline and the end card. Scenes butt up against each other; each
- * hands off in its last 0.25s.
+ * Scene timing in seconds. The 7.0 s intro (src/film/intro.tsx), then five feature scenes and
+ * the end card (src/film/scenes.tsx). Scenes butt up against each other; each hands off in its
+ * last 0.25 s and the next starts 0.2 s early.
  */
 export const FPS = 60;
 
@@ -12,7 +12,6 @@ const order = [
   ["analyze", 5.0], // Analyze Any Video: paste, click, 62×
   ["script", 4.8], // Script Writer: a mini script written out
   ["tracked", 3.2], // Track any Channel: Kopee
-  ["tagline", 2.5], // Stop guessing. Find the outliers.
   ["end", 2.8], // logo + URL
 ] as const;
 
