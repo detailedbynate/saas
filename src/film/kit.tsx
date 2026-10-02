@@ -66,7 +66,7 @@ export const words = (s: string): Word[] => {
   return [...a.split(" ").filter(Boolean).map((w) => mk(w, true)), ...b.split(" ").filter(Boolean).map((w) => mk(w, false))];
 };
 
-export const ACCENT = "#9d6bff";
+export const ACCENT = "#cdb4ff"; // pale lilac: reads on the blue-violet gradient stage
 
 /** One word: position on the graph curve over 1.3s, blur clearing on its own slower curve. */
 export function WordIn({ t, at, children, accent = false, color }: { t: number; at: number; children: ReactNode; accent?: boolean; color?: string }) {
@@ -323,7 +323,7 @@ const GLYPHS = "a9e&t%6@n#o+4$kx7?zq";
  * its turn to resolve. Every slot keeps the width of its final character, so the line never jitters,
  * and each glyph cross-fades into the next.
  */
-export function Scramble({ t, at, text, dur = 1.0, color = C.text, accent = "#a78bfa" }: { t: number; at: number; text: string; dur?: number; color?: string; accent?: string }) {
+export function Scramble({ t, at, text, dur = 1.0, color = C.text, accent = "#bfe0ff" }: { t: number; at: number; text: string; dur?: number; color?: string; accent?: string }) {
   const rate = 11; // glyph changes per second
   const u = Math.max(0, t - at) * rate;
   const step = Math.floor(u);
@@ -352,7 +352,7 @@ export function Scramble({ t, at, text, dur = 1.0, color = C.text, accent = "#a7
 }
 
 /** A four-point sparkle that pops in, then twinkles (slow turn, breathing scale). */
-export function Sparkle({ t, at, x, y, size = 44, color = "#b58cff", seed = 0 }: { t: number; at: number; x: number; y: number; size?: number; color?: string; seed?: number }) {
+export function Sparkle({ t, at, x, y, size = 44, color = "#ffffff", seed = 0 }: { t: number; at: number; x: number; y: number; size?: number; color?: string; seed?: number }) {
   const k = p(t, at, 0.9);
   if (k <= 0) return null;
   const tw = 0.82 + 0.18 * Math.sin((t - at) * 3.1 + seed * 2.3);

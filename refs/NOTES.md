@@ -272,3 +272,12 @@ Animation" tutorial intro), in `src/film/intro.tsx`, driven by the measured curv
 `src/film/introData.ts`. Background is the client's supplied gradient, pushed toward purple and
 animated (no outlined words). Differences from the reference, with frame numbers, are listed at
 the end of `SPEC.md`. Everything after 7 s is unchanged from v10.
+
+## v12: original intro using the reference's text animations; gradient under the whole film (35.2s)
+
+- Client clarified: use the Clean Text reference's text animations for Outlier, not a 1:1 copy.
+  Intro is now hook ("Find outliers / before they blow up") → name (Introducing, logo, "Outlier",
+  subtitle) → five feature buttons. See the table at the end of `SPEC.md`.
+- The supplied gradient (pushed toward purple, slowly moving, no outlined words) is now the stage
+  for the whole film (`GradientStage` in `src/film/intro.tsx`); `Bands` is no longer used.
+  Title accent colour changed to pale lilac and sparkles to white so they read on it; vignette reduced.

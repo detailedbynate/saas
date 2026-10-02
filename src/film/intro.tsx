@@ -5,18 +5,16 @@ import { LogoMark } from "../components/kit";
 import { REF } from "./introData";
 
 /*
- * The intro (f0–f419, 7.0 s), rebuilt shot for shot from SPEC.md.
+ * The intro (f0–f419, 7.0 s): an original Outlier opening built from the text animations
+ * measured in SPEC.md (word drop with overshoot, the spring lift, typing inside a text box
+ * with highlighted new letters, the icon pop, snapping letters, colour wipe, bounce, mix,
+ * typewriter, and boiling hand-drawn marks). The structure and words are Outlier's own.
  *
- * Timing, positions, sizes, overshoots, dissolves and typing speeds are the reference's:
- * the big moves are driven directly by the measured per-frame curves in ./introData.ts.
- * Words, logo, colours and the background are Outlier's. Every frame is a pure function of
- * the frame number: no timers, no random values (the scribble "boil" is seeded by frame / 8).
+ *   Hook      f0–f150    "Find outliers" drops in and lifts; "before they blow up" types in under it
+ *   Name      f138–f289  Introducing → logo pops → "Outlier" snaps in → subtitle colour-wipes
+ *   Features  f275–f419  five feature buttons, each label arriving a different way
  *
- *   Shot 1   f0–f98     "find viral shorts" drops in; "shorts" becomes a camera icon; the line shrinks
- *   dissolve f99–f110
- *   Shot 2   f111–f274  "Viral Shorts" drops in, lifts; "Research" types in under it; scribbles; subtitle
- *   dissolve f275–f289
- *   Shot 3   f290–f378  five feature buttons, each label arriving a different way; replayed from f379
+ * Every frame is a pure function of the frame number (the scribble "boil" is seeded by frame / 8).
  */
 
 export const INTRO_FRAMES = 420;
@@ -67,140 +65,147 @@ export function GradientStage({ f, light }: { f: number; light: number }) {
       <div style={pool(6, 94, 66, "200,210,255", 1, 2.4)} />
       <div style={pool(88, 90, 80, "62,20,255", 1, 3.6)} />
       <div style={pool(50, 52, 40, "128,120,255", 0.5, 4.9, 10, 8)} />
-      <AbsoluteFill style={{ background: `rgba(14,6,60,${0.1 * (1 - light)})` }} />
+      <AbsoluteFill style={{ background: `rgba(14,6,60,${0.24 * (1 - light)})` }} />
       <AbsoluteFill style={{ background: `rgba(246,244,255,${0.3 * light})` }} />
     </AbsoluteFill>
   );
 }
 
-/* ------------------------------------------------------------------ shot 1 */
+/* ------------------------------------------------------------------ beat 1: the hook */
 
 const fade: CSSProperties = { WebkitMaskImage: "linear-gradient(to bottom, #000 30%, rgba(0,0,0,0.3) 92%)", maskImage: "linear-gradient(to bottom, #000 30%, rgba(0,0,0,0.3) 92%)" };
 
-function Shot1({ f }: { f: number }) {
-  const scale = from(REF.scale, 0, f);
-  const size = 81;
-  const word = (start: number, arr: readonly (number | null)[], rest: number): CSSProperties => ({ ...fade, display: "inline-block", visibility: f < start ? "hidden" : "visible", transform: `translate(0px, ${f - start > arr.length - 1 ? 0 : from(arr, start, f) - rest}px)` });
-  // The third word collapses from its right edge (f35–f41) and is gone at f42.
-  const [, x1] = [0, table(REF.w3exit, f, 1)];
-  const keep = clamp01((x1 - 976) / (1192 - 976));
-  const icon = REF.icon[Math.max(0, Math.min(REF.icon.length - 1, f - 39))];
-  const [ix0, iy0, ix1, iy1] = [icon[1], icon[2], icon[3], icon[4]];
-  const ih = iy1 - iy0;
-  const body = Math.min(70, ix1 - ix0);
-  const lens = ix1 - ix0 - body - 6;
-  const glow = f < 39 ? 0 : 1 - ramp(f, 41, 48);
-  const text: CSSProperties = { fontFamily: FONT.display, fontWeight: 500, fontSize: size, lineHeight: `${size}px`, letterSpacing: "-0.03em", color: WHITE, whiteSpace: "nowrap" };
+/** The reference's word drop: falls in from above, a few px past its rest, and eases back. Returns the y offset. */
+function drop(f: number, start: number, travel = 1.5) {
+  if (f < start) return 0;
+  const i = f - start;
+  if (i <= 8) return (from(REF.cleanY, 105, 105 + i) - 482) * travel;
+  return 4 * travel * (1 - ramp(i, 8, 17));
+}
+
+/** A hand-drawn stroke that draws on between two frames. */
+function Stroke({ f, d, start, end, width, color, head = false }: { f: number; d: string; start: number; end: number; width: number; color: string; head?: boolean }) {
+  const k = ramp(f, start, end);
+  if (k <= 0) return null;
+  return <path d={d} fill="none" stroke={color} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={head ? 1 - easeOut(k) : 1 - k} />;
+}
+
+/** Hand-drawn marks "boil": their outline re-draws every 8 frames, as in the reference. */
+function Boil({ f, children }: { f: number; children: ReactNode }) {
   return (
-    <AbsoluteFill>
-      <div style={{ position: "absolute", inset: 0, transformOrigin: "965px 533px", transform: `scale(${scale})` }}>
-        {/* words 1 and 2 end where the reference's did (x=953); word 3 starts where its did (x=976) */}
-        <div style={{ position: "absolute", right: 1920 - 953, top: 493, ...text }}>
-          <span style={word(0, REF.dropIn, 501)}>find</span>
-          <span style={{ ...word(3, REF.dropThis, 502), marginLeft: "0.27em" }}>viral</span>
-        </div>
-        {f < 42 ? (
-          <div style={{ position: "absolute", left: 976, top: 493, ...text, clipPath: `inset(-40% ${(1 - keep) * 100}% -40% 0)`, opacity: 1 - ramp(f, 37, 42) }}>
-            <span style={{ ...word(5, REF.dropVideo, 503), transform: `translate(0px, ${(f - 5 > 25 ? 0 : from(REF.dropVideo, 5, f) - 503) + 26 * ramp(f, 36, 41)}px)` }}>shorts</span>
-          </div>
-        ) : null}
-      </div>
-      {/* the camera icon: its box is the reference's, frame for frame */}
-      {f >= 39 ? (
-        <div style={{ position: "absolute", left: ix0, top: iy0, height: ih, width: ix1 - ix0 }}>
-          <div style={{ position: "absolute", left: 0, top: 0, width: body, height: ih, borderRadius: 14, background: WHITE, boxShadow: glow > 0.01 ? `0 0 ${34 * glow}px ${8 * glow}px rgba(255,255,255,${0.75 * glow})` : undefined, display: "grid", placeItems: "center" }}>
-            <svg width={26} height={28} viewBox="0 0 26 28" style={{ opacity: ramp(f, 43, 47), transform: `scale(${0.5 + 0.5 * ramp(f, 43, 48)})` }}>
-              <path d="M3 2.5 L23 14 L3 25.5 Z" fill={POP} stroke={POP} strokeWidth={3} strokeLinejoin="round" />
-            </svg>
-          </div>
-          {lens > 2 ? <div style={{ position: "absolute", left: body + 6, top: ih * 0.16, width: lens, height: ih * 0.68, background: WHITE, borderRadius: 8, clipPath: "polygon(0 30%, 100% 0, 100% 100%, 0 70%)" }} /> : null}
-        </div>
-      ) : null}
-    </AbsoluteFill>
+    <svg width={1920} height={1080} viewBox="0 0 1920 1080" style={{ position: "absolute", left: 0, top: 0 }}>
+      <defs>
+        <filter id="boil" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves={2} seed={Math.floor(f / 8)} result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale={9} xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+      <g filter="url(#boil)">{children}</g>
+    </svg>
   );
 }
 
-/* ------------------------------------------------------------------ shot 2 */
+const TYPED = "before they blow up";
 
-/** A hand-drawn stroke that draws on between two frames. */
-function Stroke({ f, d, start, end, width, head = false }: { f: number; d: string; start: number; end: number; width: number; head?: boolean }) {
-  const k = ramp(f, start, end);
-  if (k <= 0) return null;
-  return <path d={d} fill="none" stroke={INK} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={head ? 1 - easeOut(k) : 1 - k} />;
-}
-
-const LINE1 = ["Viral", "Shorts"];
-const LINE2 = "Research";
-
-function Shot2({ f }: { f: number }) {
-  const lift = f < 138 ? 0 : table(REF.lift, f) - 482; // the measured spring: −108, 19 over, 5 under
-  const a = f < 105 ? 0 : f <= 113 ? from(REF.cleanY, 105, f) - 482 : 4 * (1 - ramp(f, 113, 122));
-  const b = f < 114 ? 0 : f <= 126 ? from(REF.textY, 114, f) - 482 : 0;
-  const slide = table(REF.line2Left, f) - 663; // the typed word starts at the right and slides left
-  const boil = Math.floor(f / 8); // the marks re-draw about 7.5 times a second
-  const bold: CSSProperties = { fontFamily: FONT.display, fontWeight: 800, color: INK, whiteSpace: "nowrap", letterSpacing: "-0.03em" };
-  const handle = (x: number, y: number) => <div style={{ position: "absolute", left: x - 7, top: y - 7, width: 14, height: 14, background: POP, opacity: f >= 177 ? 1 : 0 }} />;
-  const sub = (start: number, dx = 0): CSSProperties => ({ display: "inline-block", opacity: ramp(f, start, start + 4), transform: `translate(${dx * (1 - easeOut(ramp(f, start, start + 15)))}px, 0px)` });
+/** f0–f150. "Find outliers" drops in and lifts; "before they blow up" types in under it inside a text box; an arrow scribbles on. */
+function Hook({ f }: { f: number }) {
+  const T = { find: 4, outliers: 13, lift: 40, type: 52, box: 58, handles: 112, arrow: 84, quoteL: 100, quoteR: 106 };
+  // the reference's lift: straight up, 19 px past, 5 px back under, settled
+  const lift = f < T.lift ? 0 : (table(REF.lift, 138 + (f - T.lift)) - 482) * 0.9;
+  const typedEnd = T.type + TYPED.length * 2.9;
+  // the typed line starts at the right and slides left as letters arrive (the reference's curve, stretched to this line's length)
+  const slide = ((table(REF.line2Left, 151 + ((f - T.type) / (typedEnd - T.type)) * 27) - 663) / 462) * 560;
+  const big: CSSProperties = { fontFamily: FONT.display, fontWeight: 800, fontSize: 168, lineHeight: "170px", letterSpacing: "-0.035em", color: WHITE, whiteSpace: "nowrap" };
+  const handle = (x: number, y: number) => <div style={{ position: "absolute", left: x - 8, top: y - 8, width: 16, height: 16, background: WHITE, border: `3px solid ${SKY}`, transform: `scale(${easeOut(ramp(f, T.handles, T.handles + 8))})` }} />;
+  const box = { x: 484, y: 548, w: 952, h: 128 };
   return (
     <AbsoluteFill>
-      {/* line 1: the reference's box is x 664–1261, letters 83 px tall, top at y=482 */}
-      <div style={{ position: "absolute", left: 0, width: 1925, top: 482 - 9 + lift, display: "flex", justifyContent: "center", gap: 30, ...bold, fontSize: 106, lineHeight: "110px" }}>
-        <span style={{ ...fade, display: "inline-block", visibility: f < 105 ? "hidden" : "visible", transform: `translate(0px, ${a}px)` }}>{LINE1[0]}</span>
-        <span style={{ ...fade, display: "inline-block", visibility: f < 114 ? "hidden" : "visible", transform: `translate(0px, ${b}px)` }}>{LINE1[1]}</span>
+      <div style={{ position: "absolute", left: 0, width: 1920, top: 452 + lift, display: "flex", justifyContent: "center", gap: 44, ...big }}>
+        <span style={{ ...fade, display: "inline-block", visibility: f < T.find ? "hidden" : "visible", transform: `translate(0px, ${drop(f, T.find)}px)` }}>Find</span>
+        <span style={{ ...fade, display: "inline-block", visibility: f < T.outliers ? "hidden" : "visible", transform: `translate(0px, ${drop(f, T.outliers)}px)` }}>outliers</span>
       </div>
 
-      {/* quote marks, where the reference had them */}
-      <div style={{ position: "absolute", left: 630, top: 352, ...bold, fontSize: 64, lineHeight: "64px", opacity: ramp(f, 188, 194), transform: `scale(${0.6 + 0.4 * easeOut(ramp(f, 188, 200))})` }}>“</div>
-      <div style={{ position: "absolute", left: 1268, top: 352, ...bold, fontSize: 64, lineHeight: "64px", opacity: ramp(f, 194, 200), transform: `scale(${0.6 + 0.4 * easeOut(ramp(f, 194, 212))})` }}>”</div>
-
-      {/* line 2: dashed text box (f157), typed word (f151–), corner handles (f177) */}
-      <div style={{ position: "absolute", left: 649, top: 512, width: 624, height: 133, border: `2px dashed rgba(11,9,48,0.38)`, opacity: ramp(f, 156, 159) }} />
-      <div style={{ position: "absolute", left: 663, top: 524, width: 595, ...bold, fontSize: 132, lineHeight: "110px", transform: `translate(${slide}px, 0px)` }}>
-        {LINE2.split("").map((ch, i) => {
-          const born = 151 + i * 2.9; // the reference's typing speed: one letter every 2.9 frames
+      <div style={{ position: "absolute", left: box.x, top: box.y, width: box.w, height: box.h, border: "2px dashed rgba(255,255,255,0.5)", opacity: ramp(f, T.box, T.box + 3) }} />
+      <div style={{ position: "absolute", left: box.x + 22, top: box.y + 12, fontFamily: FONT.display, fontWeight: 700, fontSize: 96, lineHeight: "104px", letterSpacing: "-0.03em", whiteSpace: "pre", transform: `translate(${Math.max(0, slide)}px, 0px)` }}>
+        {TYPED.split("").map((ch, i) => {
+          const born = T.type + i * 2.9; // the reference's typing speed
           const k = ramp(f, born, born + 4);
-          const fresh = 1 - ramp(f, born + 5, born + 9); // newest letters are highlighted, then go to ink
+          const fresh = f < born + 7; // the newest letters are highlighted
           return (
-            <span key={i} style={{ ...fade, display: "inline-block", opacity: f < born ? 0 : 0.35 + 0.65 * k, color: fresh > 0.5 ? POP : INK, transform: `scale(${1.22 - 0.22 * easeOut(k)})`, filter: k < 1 ? `blur(${(1 - k) * 5}px)` : undefined, transformOrigin: "50% 80%" }}>
+            <span key={i} style={{ ...fade, display: "inline-block", opacity: f < born ? 0 : 0.35 + 0.65 * k, color: fresh ? SKY : WHITE, transform: `scale(${1.22 - 0.22 * easeOut(k)})`, filter: k < 1 ? `blur(${(1 - k) * 5}px)` : undefined, transformOrigin: "50% 80%" }}>
               {ch}
             </span>
           );
         })}
       </div>
-      {handle(649, 512)}
-      {handle(1273, 512)}
-      {handle(649, 645)}
-      {handle(1273, 645)}
+      {handle(box.x, box.y)}
+      {handle(box.x + box.w, box.y)}
+      {handle(box.x, box.y + box.h)}
+      {handle(box.x + box.w, box.y + box.h)}
 
-      {/* hand-drawn marks: positions and draw-on frames from the spec; they "boil" every 8 frames */}
-      <svg width={1920} height={1080} viewBox="0 0 1920 1080" style={{ position: "absolute", left: 0, top: 0 }}>
-        <defs>
-          <filter id="boil" x="-5%" y="-5%" width="110%" height="110%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves={2} seed={boil} result="n" />
-            <feDisplacementMap in="SourceGraphic" in2="n" scale={9} xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-        <g filter="url(#boil)">
-          <Stroke f={f} start={160} end={174} width={30} d="M 1640 1062 C 1650 900 1570 770 1432 690" />
-          <Stroke f={f} start={172} end={178} width={26} head d="M 1408 772 L 1412 672 L 1500 690" />
-          <Stroke f={f} start={164} end={192} width={7} d="M 1700 72 C 1640 58 1578 92 1560 132 C 1545 168 1602 172 1606 130 C 1609 96 1500 150 1388 260" />
-          <Stroke f={f} start={192} end={204} width={7} head d="M 1376 214 L 1382 268 L 1432 254" />
-          <Stroke f={f} start={167} end={177} width={24} d="M -20 52 C 44 60 22 150 84 182 C 182 216 300 236 430 264" />
-          <Stroke f={f} start={184} end={188} width={22} head d="M 372 206 L 446 268 L 356 300" />
-          <Stroke f={f} start={180} end={212} width={6} d="M 284 796 L 386 736" />
-          <Stroke f={f} start={212} end={224} width={6} head d="M 346 732 L 390 733 L 372 772" />
-          {f >= 192 ? <path d="M 1116 252 L 1125 236 L 1134 252 Z" fill="none" stroke={INK} strokeWidth={4} strokeLinejoin="round" /> : null}
-        </g>
-      </svg>
+      <div style={{ position: "absolute", left: 588, top: 268, ...big, fontSize: 110, lineHeight: "110px", opacity: ramp(f, T.quoteL, T.quoteL + 5), transform: `scale(${0.6 + 0.4 * easeOut(ramp(f, T.quoteL, T.quoteL + 12))})` }}>“</div>
+      <div style={{ position: "absolute", left: 1478, top: 268, ...big, fontSize: 110, lineHeight: "110px", opacity: ramp(f, T.quoteR, T.quoteR + 5), transform: `scale(${0.6 + 0.4 * easeOut(ramp(f, T.quoteR, T.quoteR + 12))})` }}>”</div>
 
-      {/* subtitle: reference box x 814–1109, y 683–718; pieces at f209, f212, f215 (the last slides in from the right) */}
-      <div style={{ position: "absolute", left: 0, width: 1922, top: 676, height: 48, display: "flex", justifyContent: "center", alignItems: "center", gap: 10, fontFamily: FONT.display, fontWeight: 500, fontSize: 40, color: INK, letterSpacing: "-0.02em" }}>
-        <span style={sub(209)}>in</span>
-        <span style={sub(212)}>
-          <LogoMark size={38} />
+      <Boil f={f}>
+        <Stroke f={f} color={WHITE} start={T.arrow} end={T.arrow + 14} width={26} d="M 1700 1050 C 1730 900 1690 790 1560 700" />
+        <Stroke f={f} color={WHITE} start={T.arrow + 12} end={T.arrow + 18} width={22} head d="M 1552 786 L 1540 690 L 1636 690" />
+        <Stroke f={f} color={WHITE} start={T.arrow + 6} end={T.arrow + 30} width={7} d="M 150 250 C 210 236 270 268 290 306 C 306 342 250 348 246 306 C 242 272 350 322 452 404" />
+        <Stroke f={f} color={WHITE} start={T.arrow + 30} end={T.arrow + 40} width={7} head d="M 462 356 L 458 410 L 404 400" />
+      </Boil>
+    </AbsoluteFill>
+  );
+}
+
+/* ------------------------------------------------------------------ beat 2: the name */
+
+const SUB = "The outlier finder for YouTube Shorts";
+
+/** f138–f289. "Introducing" drops in, the logo pops up like the reference's icon, "Outlier" snaps in letter by letter, the subtitle colour-wipes. */
+function Name({ f }: { f: number }) {
+  const T = { label: 142, logo: 150, name: 156, sub: 192, line: 214 };
+  // the logo rides the reference's icon curve: up from below, 11 px past, settle
+  const iconTop = table(REF.icon, 39 + (f - T.logo), 2);
+  const logoY = f < T.logo ? 60 : iconTop - 505;
+  const glow = f < T.logo ? 0 : 1 - ramp(f, T.logo + 2, T.logo + 10);
+  return (
+    <AbsoluteFill>
+      <div style={{ position: "absolute", left: 0, width: 1920, top: 312, textAlign: "center", fontFamily: FONT.display, fontWeight: 500, fontSize: 52, color: INK, letterSpacing: "-0.02em", visibility: f < T.label ? "hidden" : "visible", transform: `translate(0px, ${drop(f, T.label, 1)}px)` }}>Introducing</div>
+
+      <div style={{ position: "absolute", left: 0, width: 1920, top: 392, height: 210, display: "flex", justifyContent: "center", alignItems: "center", gap: 30, fontFamily: FONT.display, fontWeight: 800, fontSize: 190, letterSpacing: "-0.035em", color: INK, whiteSpace: "pre" }}>
+        <div style={{ opacity: ramp(f, T.logo, T.logo + 3), transform: `translate(0px, ${logoY}px)`, borderRadius: 34, boxShadow: glow > 0.01 ? `0 0 ${44 * glow}px ${10 * glow}px rgba(122,77,255,${0.7 * glow})` : undefined }}>
+          <LogoMark size={156} />
+        </div>
+        <span style={{ display: "inline-block" }}>
+          {"Outlier".split("").map((c, i) => {
+            const born = T.name + i * 3.7; // snapping: a letter comes up from below every ~3.7 frames, the word re-centres as it grows
+            const k = ramp(f, born, born + 4);
+            if (f < born) return null;
+            return (
+              <span key={i} style={{ display: "inline-block", position: "relative" }}>
+                <span style={{ visibility: "hidden", fontSize: `${k}em` }}>{c}</span>
+                <span style={{ ...fade, position: "absolute", left: 0, bottom: 0, transform: `translate(0px, ${(1 - easeOut(k)) * 90}px)`, opacity: 0.4 + 0.6 * k }}>{c}</span>
+              </span>
+            );
+          })}
         </span>
-        <span style={sub(215, 34)}>Outlier</span>
       </div>
+
+      {/* colour wipe: the whole line arrives violet, then turns to ink one letter at a time */}
+      <div style={{ position: "absolute", left: 0, width: 1920, top: 632, textAlign: "center", fontFamily: FONT.display, fontWeight: 500, fontSize: 58, letterSpacing: "-0.02em", whiteSpace: "pre", visibility: f < T.sub ? "hidden" : "visible", opacity: 0.4 + 0.6 * ramp(f, T.sub, T.sub + 6) }}>
+        {SUB.split("").map((c, i) => (
+          <span key={i} style={{ color: f >= T.sub + 5 + i * 1.5 ? INK : POP }}>
+            {c}
+          </span>
+        ))}
+      </div>
+
+      <Boil f={f}>
+        <Stroke f={f} color={INK} start={T.line} end={T.line + 16} width={9} d="M 690 742 C 860 722 1060 752 1232 730" />
+        <Stroke f={f} color={INK} start={T.line + 8} end={T.line + 22} width={22} d="M 250 190 C 330 170 400 250 470 330" />
+        <Stroke f={f} color={INK} start={T.line + 20} end={T.line + 26} width={20} head d="M 478 244 L 480 340 L 388 338" />
+        <Stroke f={f} color={INK} start={T.line + 14} end={T.line + 30} width={6} d="M 1640 880 L 1548 800" />
+        <Stroke f={f} color={INK} start={T.line + 30} end={T.line + 38} width={6} head d="M 1594 802 L 1546 798 L 1552 846" />
+      </Boil>
     </AbsoluteFill>
   );
 }
@@ -276,9 +281,9 @@ function Label({ f, kind, text }: { f: number; kind: Kind; text: string }) {
   return <span style={{ display: "inline-block", whiteSpace: "pre" }}>{inner}</span>;
 }
 
-function Shot3({ f }: { f: number }) {
-  // The reference replays the animation from its first frame at f379 (and again at f496).
-  const local = f >= 379 ? f - 89 : f;
+/** f275–f419. Five feature buttons, each label arriving with a different one of the reference's text animations. */
+function Features({ f }: { f: number }) {
+  const local = f;
   return (
     <AbsoluteFill>
       {BUTTONS.map(([key, kind, text]) => {
@@ -295,30 +300,36 @@ function Shot3({ f }: { f: number }) {
 
 /* ------------------------------------------------------------------ the intro */
 
-/** Frames 0–419. `out` (0–1) lets the film fade the intro away over its last frames. */
+// Two straight 12- and 15-frame dissolves, like the reference's.
+const D1 = [138, 150] as const;
+const D2 = [275, 289] as const;
+
+/** How light the stage is during the intro (0 = deep, 1 = light), for the shared background. */
+export function introLight(f: number) {
+  return ramp(f, D1[0], D1[1]) * (1 - ramp(f, D2[0], D2[1]));
+}
+
+/** Frames 0–419: hook → name → features. Draws only its own content; the gradient stage is shared with the rest of the film. */
 export function Intro() {
   const f = useCurrentFrame();
-  // The reference's two dissolves are straight ramps: f99–f110 and f275–f289.
-  const d1 = ramp(f, 98, 110);
-  const d2 = ramp(f, 274, 289);
-  const light = d1 * (1 - d2);
-  const out = ramp(f, INTRO_FRAMES - 12, INTRO_FRAMES); // hand-off to the rest of the film (not in the reference)
+  const d1 = ramp(f, D1[0], D1[1]);
+  const d2 = ramp(f, D2[0], D2[1]);
+  const out = ramp(f, INTRO_FRAMES - 12, INTRO_FRAMES); // hand-off to the first feature scene
   return (
     <AbsoluteFill style={{ opacity: 1 - out }}>
-      <GradientStage f={f} light={light} />
-      {f < 111 ? (
+      {f <= D1[1] ? (
         <AbsoluteFill style={{ opacity: 1 - d1 }}>
-          <Shot1 f={f} />
+          <Hook f={f} />
         </AbsoluteFill>
       ) : null}
-      {f >= 99 && f < 290 ? (
+      {f >= D1[0] && f <= D2[1] ? (
         <AbsoluteFill style={{ opacity: d1 * (1 - d2) }}>
-          <Shot2 f={f} />
+          <Name f={f} />
         </AbsoluteFill>
       ) : null}
-      {f >= 275 ? (
+      {f >= D2[0] ? (
         <AbsoluteFill style={{ opacity: d2 }}>
-          <Shot3 f={f} />
+          <Features f={f} />
         </AbsoluteFill>
       ) : null}
     </AbsoluteFill>

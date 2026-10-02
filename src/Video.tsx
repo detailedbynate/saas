@@ -2,8 +2,7 @@ import { AbsoluteFill, Audio, Sequence, continueRender, delayRender, interpolate
 import { type ComponentType, useEffect, useState } from "react";
 import { SmoothMotionBlur } from "./components/blur";
 import { Finish } from "./components/fx";
-import { Bands } from "./film/kit";
-import { INTRO_FRAMES, Intro } from "./film/intro";
+import { GradientStage, INTRO_FRAMES, Intro, introLight } from "./film/intro";
 import { AnalyzeVideo, End, NicheFinder, ScriptWriter, Tagline, TrackedChannels, ViralVideos } from "./film/scenes";
 import { fontsReady } from "./theme";
 import { FPS, SHOTS, type SceneId, TOTAL_FRAMES } from "./timeline";
@@ -31,11 +30,13 @@ const SCENES: [SceneId, ComponentType<{ dur: number }>][] = [
 /** Sound effects: [file, seconds, volume]. A soft whoosh into each scene, clicks on the clicks, a hit on the end card. */
 const SFX: [string, number, number][] = [
   ...SCENES.slice(1).map(([id]): [string, number, number] => ["whoosh", start(id) - 0.1, 0.25]),
-  // The intro's hits, on the reference's frames (SPEC.md, "Sound")
-  ["pop", 42 / 60, 0.35],
-  ["pop", 165 / 60, 0.3],
-  ["subhit", 265 / 60, 0.8],
-  ["pop", 386 / 60, 0.3],
+  // intro
+  ["pop", 4 / 60, 0.3],
+  ["pop", 13 / 60, 0.3],
+  ["typing", 52 / 60, 0.3],
+  ["subhit", 150 / 60, 0.7],
+  ["shimmer", 156 / 60, 0.35],
+  ["pop", 293 / 60, 0.3],
   ["typing", start("niche") + 1.35, 0.3],
   ["click", start("niche") + 2.45, 0.5],
   ...[0, 1, 2].map((i): [string, number, number] => ["pop", start("niche") + 2.8 + i * 0.09, 0.22]),
@@ -53,9 +54,11 @@ const SFX: [string, number, number][] = [
 ];
 
 function Film() {
+  const frame = useCurrentFrame();
   return (
     <AbsoluteFill style={{ background: "#05040c" }}>
-      <Bands cuts={SCENES.slice(1).map(([id]) => start(id))} />
+      {/* one gradient stage under the whole film; it lightens for the middle of the intro */}
+      <GradientStage f={frame} light={introLight(frame)} />
       {SCENES.map(([id, Scene]) => (
         <Sequence key={id} name={id} from={f(start(id))} durationInFrames={f(length(id))}>
           <Scene dur={length(id)} />
@@ -75,7 +78,7 @@ export function SceneTest({ scene, motionBlur }: { scene: SceneId; motionBlur: n
   const [, Scene] = SCENES.find(([id]) => id === scene) ?? SCENES[4];
   const picture = (
     <AbsoluteFill style={{ background: "#05040c" }}>
-      <Bands />
+      <GradientStage f={0} light={0} />
       <Scene dur={length(scene)} />
     </AbsoluteFill>
   );
@@ -113,8 +116,7 @@ function useFonts() {
 export function OutlierLaunch({ motionBlur }: LaunchProps) {
   useFonts();
   const frame = useCurrentFrame();
-  // The intro's gradient has no vignette; it comes in with the dark stage as the intro fades away.
-  const vignette = interpolate(frame, [INTRO_FRAMES - 12, INTRO_FRAMES], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const vignette = 0.25; // a light one: the gradient should stay bright into the corners
   return (
     <AbsoluteFill style={{ background: "#000" }}>
       {motionBlur > 0 ? (
